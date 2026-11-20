@@ -51,6 +51,7 @@ export function showTitle(root, run, actions) {
     chapters.slice(0, reachedChapter(run)).forEach((chapter, index) =>
       row.append(button(chapter.title, () => actions.select(index + 1))));
   }
+  body.append(actions.musicControls());
 }
 
 export function showClasses(root, actions) {

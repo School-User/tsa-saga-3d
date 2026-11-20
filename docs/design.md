@@ -4,7 +4,16 @@ The player is a fleet Navigator. A signal leads from the drifting survey ship Me
 
 Play alternates between walking a small room, reading the Game Master’s account, inspecting objects, working a console, and talking through a decision. The Game Master describes what the Navigator can see and what changes after an action. The player decides what matters. Urgency comes from the scene and its visible state. Exploration and conversation give the player time to read and think. Every encounter is peaceful and is resolved by investigation, conversation or a puzzle.
 
-The game runs on GitHub Pages as a static browser game with locally vendored Three.js and its license. Use simple low-poly geometry for every 3D object, with local 2D illustrations on chapter cards if available. The game is silent, including its dice, radio, ship systems and menus. All radio and companion lines appear as text. Runtime uses local files served with the game and local save storage. All character names are fictional and the Navigator uses a title.
+The game runs on GitHub Pages as a static browser game with locally vendored Three.js and its license. Use simple low-poly geometry for every 3D object, with local 2D illustrations on chapter cards if available. All radio and companion lines appear as text. Runtime uses local files served with the game and local save storage. All character names are fictional and the Navigator uses a title.
+
+The original ambient soundtrack is generated in code. A Web Audio sequencer
+plays oscillator notes through low-pass filters and gain envelopes. Meridian has
+sparse, cool pads and a distant pulse. Harbor Nine has warmer chords and a
+gentle rhythm. Verdant uses soft plucked notes and a hopeful melody, which
+returns in the finale. The title has its own variation. The music starts
+quietly after a player gesture and crossfades when the theme changes. Pause
+ducks the music. The title and Pause offer a persistent music toggle and volume
+slider. The `?test=1` mode creates no AudioContext.
 
 ## Character creation and checks
 

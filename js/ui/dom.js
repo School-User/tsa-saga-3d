@@ -15,6 +15,36 @@ export function button(label, action, className = 'btn ghost') {
   return node;
 }
 
+export function musicControls(music) {
+  const row = el('div', 'music-controls');
+  const toggle = button('', () => {
+    music.setSettings({ enabled: !music.settings.enabled });
+    updateToggle();
+  }, 'btn ghost small');
+  toggle.setAttribute('aria-label', 'Music');
+  toggle.disabled = music.locked;
+
+  function updateToggle() {
+    const { enabled } = music.settings;
+    toggle.textContent = enabled ? 'Music on' : 'Music off';
+    toggle.setAttribute('aria-pressed', String(enabled));
+  }
+
+  const label = el('label', '', 'Volume');
+  const slider = el('input');
+  slider.type = 'range';
+  slider.min = '0';
+  slider.max = '100';
+  slider.value = music.settings.volume;
+  slider.disabled = music.locked;
+  slider.setAttribute('aria-label', 'Music volume');
+  slider.addEventListener('input', () => music.setSettings({ volume: slider.valueAsNumber }));
+  label.append(slider);
+  row.append(toggle, label);
+  updateToggle();
+  return row;
+}
+
 export function title(node) {
   node.tabIndex = -1;
   node.focus();

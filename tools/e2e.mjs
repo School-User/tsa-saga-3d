@@ -24,9 +24,25 @@ try {
 
 async function play({ send, evaluate }) {
   await send('Emulation.setEmulatedMedia', { features: [{ name: 'prefers-reduced-motion', value: 'reduce' }] });
+  await send('Page.addScriptToEvaluateOnNewDocument', { source: `
+    if (new URLSearchParams(location.search).get('test') === '1') {
+      window.audioContextAttempts = 0;
+      for (const key of ['AudioContext', 'webkitAudioContext']) {
+        const Audio = window[key];
+        if (Audio) window[key] = new Proxy(Audio, {
+          construct(target, args) {
+            window.audioContextAttempts++;
+            return Reflect.construct(target, args);
+          }
+        });
+      }
+    }
+  ` });
   await send('Page.navigate', { url: server.url + '/?test=1' });
   await until(() => evaluate('Boolean(window.__game)'));
   await send('Page.bringToFront');
+  assert.equal(await evaluate(`document.querySelector('[aria-label="Music"]:disabled')
+    ?.getAttribute('aria-pressed')`), 'false');
 
   // Use the same buttons a player does for screens and modal Back actions.
   const click = async (label, selector = 'button') => {
@@ -265,6 +281,7 @@ async function play({ send, evaluate }) {
   await verifyCanvas(evaluate);
   await shot('finale');
 
+  assert.equal(await evaluate('window.audioContextAttempts'), 0, 'Test mode must never create an AudioContext');
   await send('Page.navigate', { url: server.url + '/' });
   await until(() => evaluate('document.querySelector("#screen h1")?.textContent === "The Long Quiet"'));
   assert.equal(await evaluate('Object.hasOwn(window, "__game")'), false);

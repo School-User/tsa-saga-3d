@@ -93,6 +93,15 @@ p { margin-block: .6rem; }
 .card-art img { display: block; width: 100%; aspect-ratio: 1.11; object-fit: cover; }
 .card-actions, .row { display: flex; align-items: center; flex-wrap: wrap; gap: .62rem; margin-top: 1rem; }
 .card-actions { margin-top: 1.65rem; }
+.music-controls, .music-controls label {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: .65rem;
+}
+.music-controls { margin-block: 1.1rem; }
+.music-controls label { color: var(--soft); font-size: .89rem; }
+.music-controls input { width: min(8rem, 34vw); margin: 0; accent-color: var(--accent); }
 .chapter-select { margin-top: 2.1rem; }
 .chapter-select + .card-actions { margin-top: .6rem; }
 .story-copy, .route-copy, .epilogue { max-width: 52ch; }

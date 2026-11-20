@@ -5,7 +5,7 @@ export function isVisible(node) {
   return node.getClientRects().length > 0 && getComputedStyle(node).visibility === 'visible';
 }
 
-export function createModal(defaultFocus, onOpen) {
+export function createModal(defaultFocus, onChange) {
   const dialog = get('overlay');
   const content = get('overlay-content');
   let opener;
@@ -17,8 +17,8 @@ export function createModal(defaultFocus, onOpen) {
       opener = document.activeElement;
       dialog.showModal();
     }
-    onOpen();
     kind = type;
+    onChange(kind);
     onBack = back;
     dialog.dataset.kind = type;
     dialog.scrollTop = 0;
@@ -35,6 +35,7 @@ export function createModal(defaultFocus, onOpen) {
     dialog.close();
     content.replaceChildren();
     kind = null;
+    onChange(kind);
     onBack = null;
     if (opener?.matches('button') && opener.isConnected && isVisible(opener)) opener.focus();
     else defaultFocus()?.focus();

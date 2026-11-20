@@ -21,6 +21,7 @@ export function openPanel(id, ctx) {
     if (id === 'objects') objects(content, room, run, ctx);
     if (id === 'pause') {
       if (!ctx.saved) content.append(el('p', '', 'Progress is available for this session. Keep this tab open to continue.'));
+      content.append(ctx.musicControls());
       content.append(button(ctx.saved ? 'Save and return to title' : 'Return to title', ctx.title));
     }
     if (id === 'training') training(content, run, ctx);

@@ -12,6 +12,12 @@ spending rank points.
 Escape backs out of a panel or opens Pause. If WebGL 2 is unavailable, use
 **Room objects** to keep playing.
 
+The original ambient soundtrack is generated in code with the Web Audio API.
+It starts at low volume after a click or keypress and crossfades between the
+title, chapter themes and finale. Use **Music** and **Volume** on the title
+screen or in Pause. Pause lowers the music until you resume, and the browser
+saves your music preference and volume separately from the game save.
+
 ## Files
 
 | File or folder | Contents |
@@ -22,17 +28,17 @@ Escape backs out of a panel or opens Pause. If WebGL 2 is unavailable, use
 | `js/story/` | Starting classes, chapter dialogue, flags, items, companions and epilogues |
 | `js/world/` | Room layouts, low-poly characters, repair set pieces, Verdant finale, camera and guided walking |
 | `js/puzzles/` | The nine original puzzle rules and controls, adapted as room overlays |
+| `js/audio/` | Original note patterns, oscillator voices and soundtrack sequencer |
 | `js/ui/` | Title, character creation, chapter cards, finale, HUD, panels and dialogue presentation |
 | `assets/ch1/`, `assets/ch2/`, `assets/ch3/` | Local WebP chapter illustrations. Verdant’s illustration is also the graphics fallback for the finale. |
 | `lib/` | Vendored Three.js modules and license (upstream files) |
-| `tests/` | Dice math, saves, chapter revisits, room gates and paths, XP and rank, all nine puzzle controls, evidence unlocks and 3D state changes |
+| `tests/` | Dice math, saves, chapter revisits, room gates and paths, XP and rank, all nine puzzle controls, evidence unlocks, 3D state changes and music |
 | `tools/chromium.mjs`, `tools/e2e.mjs` | Local HTTP server, DevTools connection and nine-room browser playthrough |
 
 ## Tests
 
 ```sh
-node tests/core.test.js
-node tests/puzzles.test.js
+node --test tests/*.test.js
 find js lib tests tools -type f \( -name '*.js' -o -name '*.mjs' \) -exec node --check {} \;
 node tools/e2e.mjs
 ```
@@ -46,7 +52,8 @@ every room, restores a pending dialogue roll and plays to Verdant’s 3D finale.
 It checks browser errors and writes `room-1.png`, `room-5.png`, `room-9.png`
 and `finale.png` to `tools/shots/`.
 
-The test hook is available only when the URL includes `?test=1`.
+The test hook is available only when the URL includes `?test=1`. That mode
+forces music off and skips creating an AudioContext.
 
 ## Round 2 play details
 

@@ -4,7 +4,9 @@ import { d20, resolveCheck } from './checks.js';
 import { openDialogue, nodeChoices, choiceAvailable, followChoice, advanceDialogue } from './dialogue.js';
 import { puzzles } from './puzzles/index.js';
 import { createWorld } from './world/view.js';
-import { get, el, button } from './ui/dom.js';
+import { createMusic } from './audio/music.js';
+import { chapterThemes } from './audio/themes.js';
+import { get, el, button, musicControls } from './ui/dom.js';
 import { createModal } from './ui/modal.js';
 import { showTitle, showClasses, showChapter, showFinale } from './ui/screens.js';
 import { initializeHud, showRoomHud, updateHud, setPrompt } from './ui/room.js';
@@ -16,8 +18,12 @@ const root = get('screen');
 const roomScreen = get('room-screen');
 const canvas = get('world');
 const focusDefault = () => roomScreen.hidden ? root.querySelector('h1') : get('room-title');
-const modal = createModal(focusDefault, () => world?.cancel());
 const storage = getStorage();
+const music = createMusic({ storage, test });
+const modal = createModal(focusDefault, kind => {
+  if (kind) world?.cancel();
+  music.setPaused(kind === 'pause');
+});
 let run = state.loadRun(storage);
 if (run && !classes.some(background => background.id === run.classId)) run = null;
 let world = null;
@@ -53,19 +59,26 @@ function titleScreen() {
   roomScreen.hidden = true;
   root.hidden = false;
   get('app').dataset.chapter = '1';
+  music.setTheme('title');
   showTitle(root, run, actions);
+}
+
+function chooseBackground() {
+  music.setTheme('title');
+  showClasses(root, actions);
 }
 
 const actions = {
   title: titleScreen,
   resume: render,
+  musicControls: () => musicControls(music),
   newGame() {
-    if (!run) return showClasses(root, actions);
+    if (!run) return chooseBackground();
     modal.open('reset', 'Start a new run?', content => {
       content.append(el('p', '', 'Confirming a new background will replace this saved voyage.'));
       content.append(button('Choose a new background', () => {
         modal.close();
-        showClasses(root, actions);
+        chooseBackground();
       }, 'btn primary'), button('Back', modal.close));
     }, modal.close);
   },
@@ -95,6 +108,7 @@ function transition() {
 
 function render() {
   modal.close();
+  music.setTheme(run.screen === 'finale' ? 'finale' : chapterThemes[run.chapter - 1]);
   get('app').dataset.chapter = run.chapter;
   roomScreen.hidden = run.screen !== 'room';
   root.hidden = !roomScreen.hidden;
@@ -128,6 +142,7 @@ function panel(id) {
 function openRoomPanel(id) {
   openPanel(id, {
     modal, room, run, saved, close: modal.close, title: titleScreen, position: world?.position,
+    musicControls: actions.musicControls,
     guide(id) {
       modal.close();
       guide(id);
@@ -260,6 +275,10 @@ function finishPuzzle(hotspot, bypass) {
 }
 
 initializeHud(panel);
+if (!test) {
+  document.addEventListener('click', music.unlock);
+  document.addEventListener('keydown', music.unlock);
+}
 document.addEventListener('keydown', event => {
   if (event.key === 'Escape' && room && !modal.kind && !event.repeat) {
     event.preventDefault();
