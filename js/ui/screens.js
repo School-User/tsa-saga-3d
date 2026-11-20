@@ -1,5 +1,6 @@
 import { chapters, classes, chapterAt, journalSize } from '../story/data.js';
 import { meetsFlags, rankFor, modifier, signed, reachedChapter } from '../state.js';
+import { finaleCaption } from '../world/finale.js';
 import { el, button, title, statsText } from './dom.js';
 
 function art(chapter) {
@@ -95,8 +96,17 @@ export function showChapter(root, run, actions) {
   }
 }
 
-export function showFinale(root, run, actions) {
+export function showFinale(root, run, actions, canvas) {
   const body = card(root, { label: 'Voyage complete', heading: chapters[2].finale.title, image: chapters[2] });
+  const figure = root.querySelector('.card-art');
+  figure.classList.add('finale-art');
+  if (canvas) {
+    figure.querySelector('img').hidden = true;
+    canvas.setAttribute('aria-label', '3D exterior view of Verdant');
+    canvas.removeAttribute('aria-describedby');
+    figure.prepend(canvas);
+  }
+  figure.append(el('figcaption', '', finaleCaption(run.flags)));
   const epilogue = el('div', 'epilogue');
   chapters.forEach(chapter => {
     const ending = chapter.endings.find(entry => run.flags[entry.flag]);

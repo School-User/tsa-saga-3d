@@ -61,25 +61,26 @@ window.Story[2] = {
           dialogue: {
             start: 'a',
             nodes: {
-              a: { speaker: 'Pilot Tamsin', text: 'Harbor Nine, this is the Reed. Hull intact, fuel low, static across the display. I cannot see your docking lights. Is anyone there?', choices: [
-                { text: '“I am here, Tamsin. We will do this one step at a time.”', id: 'c2_tamsin_calm', check: { stat: 'emp', dc: 13, onPass: 'calm', onFail: 'uncertain' }, setFlag: 'c2_tamsin_calm', xp: 15 },
+              a: { speaker: 'Pilot Tamsin', afterFlag: 'c2_ring_lit', afterText: 'Harbor Nine, this is the Reed. I see the ring lights and I’m holding on approach.', text: 'Harbor Nine, this is the Reed. Hull intact, fuel low, static across the display. I cannot see your docking lights. Is anyone there?', choices: [
+                { text: '“I am here, Tamsin. We will do this one step at a time.”', id: 'c2_tamsin_calm', unlock: 'The simultaneous docking check gains advantage.', check: { stat: 'emp', dc: 13, onPass: 'calm', onFail: 'uncertain' }, setFlag: 'c2_tamsin_calm', xp: 15 },
                 { text: '“Hold position. How much fuel do you have?”', next: 'fuel' },
-                { text: '“The lights are out. Give me a minute.”', next: 'fuel' }
+                { text: '“The lights are out. Give me a minute.”', afterFlag: 'c2_ring_lit',
+                  afterText: '“The approach is lit. Do you still have fuel to hold?”', next: 'fuel' }
               ] },
-              calm: { speaker: 'Pilot Tamsin', text: 'One step at a time. Yes. My computer recognises the ring by the order its pads light up. Play the pattern and enter it again at the desk.', choices: [
+              calm: { speaker: 'Pilot Tamsin', afterFlag: 'c2_ring_lit', afterText: 'The ring pattern came through. The Reed can hold here while you clear the cargo lift.', text: 'One step at a time. Yes. My computer recognises the ring by the order its pads light up. Play the pattern and enter it again at the desk.', choices: [
                 { text: '“I’ll watch the pads.”', next: 'end' }
               ] },
-              uncertain: { speaker: 'Pilot Tamsin', text: 'Part of that came through. Let’s stick to short messages until the ring is lit.', choices: [
+              uncertain: { speaker: 'Pilot Tamsin', text: 'Part of that came through. Let’s stick to short messages for now.', choices: [
                 { text: '“Fuel reading?”', next: 'fuel' }
               ] },
-              fuel: { speaker: 'Pilot Tamsin', text: 'Ten percent, maybe less. My computer recognises the ring by the order its pads light up. Watch the pattern, then repeat it on the pads.', choices: [
+              fuel: { speaker: 'Pilot Tamsin', afterFlag: 'c2_ring_lit', afterText: 'The ring pattern came through. The Reed can hold here while you clear the cargo lift.', text: 'Ten percent, maybe less. My computer recognises the ring by the order its pads light up. Watch the pattern, then repeat it on the pads.', choices: [
                 { text: '“On it.”', next: 'end' }
               ] },
-              end: { speaker: 'Pilot Tamsin', text: 'Holding position. Tell me when you see the first light.', choices: [{ id: 'done', text: 'Done', setFlag: 'c2_radio1_heard' }] }
+              end: { speaker: 'Pilot Tamsin', afterFlag: 'c2_ring_lit', afterText: 'The ring pattern came through. The Reed can hold here while you clear the cargo lift.', text: 'Holding position. Tell me when you see the first light.', choices: [{ id: 'done', text: 'Done', setFlag: 'c2_radio1_heard' }] }
             }
           }
         },
-        { id: 'c2_p_memory', label: 'Light the docking ring', puzzle: 'memory', setFlag: 'c2_ring_lit', xp: 30,
+        { id: 'c2_p_memory', label: 'Light the docking ring', puzzle: 'memory', console: 'Reed approach lights', setFlag: 'c2_ring_lit', xp: 30,
           text: 'The ring wakes in a slow circle of light. Beyond the window the Reed answers with one blink.',
           bypassText: 'You run the ring’s maintenance sequence. One light after another comes on, and the Reed blinks in reply.' },
         { id: 'c2_door1', label: 'Head down to the cargo bay', needFlag: 'c2_ring_lit', exit: true,
@@ -90,7 +91,11 @@ window.Story[2] = {
       id: 5,
       title: 'Cargo Bay',
       intro: 'Nine grey crates sit in three rows. Pip waits by the manifest terminal. The tower lift checks both the weight test and the cargo list.',
-      afterIntro: 'The lifting rig has the heavy crate. The tower lift checks the weight and Pip’s manifest separately.',
+      afterIntro: 'The lifting rig has the heavy crate. The tower lift still needs Pip’s manifest.',
+      narration: [
+        { needAll: ['c2_cargo_ok', 'c2_manifest'], text: 'The rig has the heavy crate and Pip’s manifest is clear. The tower lift doors part.' },
+        { needFlag: 'c2_manifest', text: 'Pip’s manifest terminal shows clearance. The lift still needs a verified weight.' }
+      ],
       goals: [
         { text: 'Find the heavy crate', needFlag: 'c2_cargo_ok' },
         { text: 'Get Pip to unlock the manifest', needFlag: 'c2_manifest' }
@@ -108,9 +113,9 @@ window.Story[2] = {
             start: 'a',
             nodes: {
               a: { speaker: 'Pip', text: 'Manifest is locked. Pip is guarding the cargo list. A crate fell once. Pip counts them every time now.', choices: [
-                { text: '“One dropped crate tells me very little about you, Pip.”', id: 'c2_pip_emp', check: { stat: 'emp', dc: 12, onPass: 'win', onFail: 'ask' }, setFlag: 'c2_manifest', xp: 20 },
-                { text: '“This lock code belonged to the last owner. Let’s look at the log.”', id: 'c2_pip_sci', check: { stat: 'sci', dc: 12, onPass: 'win', onFail: 'ask' }, setFlag: 'c2_manifest', xp: 20 },
-                { text: '“May I recalibrate your grip sensor?”', id: 'c2_pip_eng', check: { stat: 'eng', dc: 12, onPass: 'win', onFail: 'ask' }, setFlag: 'c2_manifest', xp: 20 },
+                { text: '“One dropped crate tells me very little about you, Pip.”', id: 'c2_pip_emp', unlock: 'Pip agrees to share the manifest.', check: { stat: 'emp', dc: 12, onPass: 'win', onFail: 'ask' }, setFlag: 'c2_manifest', xp: 20 },
+                { text: '“This lock code belonged to the last owner. Let’s look at the log.”', id: 'c2_pip_sci', unlock: 'Pip agrees to share the manifest.', check: { stat: 'sci', dc: 12, onPass: 'win', onFail: 'ask' }, setFlag: 'c2_manifest', xp: 20 },
+                { text: '“May I recalibrate your grip sensor?”', id: 'c2_pip_eng', unlock: 'Pip agrees to share the manifest.', check: { stat: 'eng', dc: 12, onPass: 'win', onFail: 'ask' }, setFlag: 'c2_manifest', xp: 20 },
                 { text: '“Please, Pip. People are waiting.”', next: 'ask' }
               ] },
               ask: { speaker: 'Pip', text: 'Pip would like to finish the count. People are waiting. If you count crates with Pip, Pip will share.', choices: [
@@ -123,7 +128,7 @@ window.Story[2] = {
             }
           }
         },
-        { id: 'c2_p_scales', label: 'Use the balance scale', puzzle: 'scales', setFlag: 'c2_cargo_ok', xp: 30,
+        { id: 'c2_p_scales', label: 'Use the balance scale', puzzle: 'scales', console: 'Freight counterweights', setFlag: 'c2_cargo_ok', xp: 30,
           text: 'The heavy crate rolls onto the lifting rig. The tower lift’s weight indicator turns green.',
           bypassText: 'You let the lifting rig weigh the crates one by one. It keeps the heaviest, and the lift’s weight indicator turns green.' },
         { id: 'c2_door2', label: 'Take the lift to the tower', needAll: ['c2_cargo_ok', 'c2_manifest'], exit: true,
@@ -146,7 +151,7 @@ window.Story[2] = {
       hotspots: [
         { id: 'c2_look3', label: 'Study the static', xp: 5,
           text: 'A thin stripe keeps resurfacing on the monitor. The strength meter rises as the dials bring that stripe into focus.' },
-        { id: 'c2_p_tuner', label: 'Tune the beacon', puzzle: 'tuner', setFlag: 'c2_beacon_tuned', xp: 30,
+        { id: 'c2_p_tuner', label: 'Tune the beacon', puzzle: 'tuner', console: 'Harbor Nine relay mast', setFlag: 'c2_beacon_tuned', xp: 30,
           text: 'The stripe holds steady. On the tower display, the beacon reaches all three ships.',
           bypassText: 'You let the tower scan both dials automatically. The stripe holds steady and three acknowledgements appear.' },
         {
@@ -158,7 +163,7 @@ window.Story[2] = {
               a: { speaker: 'Game Master', text: 'Three messages arrive together. The Reed, the Halcyon and the Marigold are all low on fuel and ask to dock first. The Halcyon adds a line about injured crew. All three wait for your instructions.', choices: [
                 { text: '“We will dock in arrival order. Tamsin, you have waited longest.”', next: 'fair' },
                 { text: '“Halcyon, your crew need the infirmary. You dock first.”', next: 'medic' },
-                { text: '“Three bays, three approaches. Tamsin, help me guide everyone in together.”', id: 'c2_cap_all', check: { stat: 'emp', dc: 15, onPass: 'all', onFail: 'overlap' }, xp: 25 },
+                { text: '“Three bays, three approaches. Tamsin, help me guide everyone in together.”', id: 'c2_cap_all', unlock: 'The captains can now confirm simultaneous docking.', check: { stat: 'emp', dc: 15, onPass: 'all', onFail: 'overlap' }, xp: 25 },
                 { text: '“Everyone hold while I look at the arrivals.”', next: 'hold' }
               ] },
               hold: { speaker: 'ORI', text: 'The Reed arrived first. The Halcyon requests medical help. The Marigold confirms it can hold. I have put the three reports side by side.', choices: [

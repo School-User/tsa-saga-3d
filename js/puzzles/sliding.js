@@ -1,4 +1,4 @@
-// Water line slide: move the numbered pipe sections into order around the empty socket.
+// Dome return pipes: move the numbered pipe sections into order around the empty socket.
 // The starting board is twelve moves from solved.
 var START = [1, 8, 2, 4, 0, 5, 7, 3, 6];
 var GOAL = [1, 2, 3, 4, 5, 6, 7, 8, 0];
@@ -17,7 +17,7 @@ export function start(el, ctx, done) {
   var stopped = false, solving = false, timer;
   var focusAt = 1;
 
-  el.appendChild(mk('h2', {}, 'Water line slide'));
+  el.appendChild(mk('h2', {}, 'Dome return pipes'));
   el.appendChild(mk('p', { 'class': 'small' },
     'The pipe sections slipped loose. Slide them around the empty socket until they ' +
     'read 1 to 8 left to right, top to bottom, with the empty socket at bottom right. ' +
@@ -28,14 +28,14 @@ export function start(el, ctx, done) {
   }
 
   var grid = mk('div', {
-    role: 'group', 'aria-label': 'Sliding tiles, 3 rows by 3 columns',
+    role: 'group', 'aria-label': 'Pipe frame, 3 rows by 3 columns',
     style: 'display:grid;grid-template-columns:repeat(3,minmax(3.4rem,4rem));gap:.4rem;' +
            'margin:.75rem 0;max-width:13rem'
   });
 
   for (var i = 0; i < 9; i++) {
     var b = mk('button', {
-      type: 'button',
+      type: 'button', 'class': 'pipe-section',
       style: 'font:inherit;font-size:1.3rem;font-weight:600;padding:.8rem 0;' +
              'border:2px solid var(--line);border-radius:.6rem;min-height:3.2rem;cursor:pointer'
     });

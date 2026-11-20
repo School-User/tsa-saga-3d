@@ -22,10 +22,10 @@ export function start(el, ctx, done) {
   var failures = 0, stopped = false, solving = false;
   var timer;
 
-  el.appendChild(mk('h2', {}, 'Signal tuner'));
+  el.appendChild(mk('h2', {}, 'Harbor Nine beacon'));
   el.appendChild(mk('p', { 'class': 'small' },
     'Adjust one dial until the signal peaks, then adjust the other. Lock in at 100%. ' +
-    'Both sliders work with the arrow keys.'));
+    'The mast needs a steady carrier to show the captains their approach. Both sliders work with the arrow keys.'));
 
   var live = mk('p', { 'class': 'small', role: 'status', 'aria-live': 'polite' });
   var bar = mk('div', { 'class': 'meter', role: 'progressbar',

@@ -59,25 +59,26 @@ window.Story[3] = {
           dialogue: {
             start: 'a',
             nodes: {
-              a: { speaker: 'Fern', text: 'Navigator? The vault doors are frozen. The seeds are fine, I think. I count them every night, and the count keeps changing. I may be ill.', choices: [
-                { text: '“You sound tired, Fern. We can take this one drawer at a time.”', id: 'c3_fern_calm', check: { stat: 'emp', dc: 13, onPass: 'calm', onFail: 'uncertain' }, setFlag: 'c3_fern_calm', xp: 15 },
-                { text: '“What exactly is frozen?”', next: 'what' },
+              a: { speaker: 'Fern', afterFlag: 'c3_vault_open', afterText: 'You freed the door. The cold drawers are holding temperature, and I can check the seeds one row at a time.', text: 'Navigator? The vault doors are frozen. The seeds are fine, I think. I count them every night, and the count keeps changing. I may be ill.', choices: [
+                { text: '“You sound tired, Fern. We can take this one drawer at a time.”', id: 'c3_fern_calm', unlock: 'The seed release check gains advantage.', check: { stat: 'emp', dc: 13, onPass: 'calm', onFail: 'uncertain' }, setFlag: 'c3_fern_calm', xp: 15 },
+                { text: '“What exactly is frozen?”', afterFlag: 'c3_vault_open',
+                  afterText: '“How are the drawers holding up?”', next: 'what' },
                 { text: '“Show me the door.”', next: 'what' }
               ] },
-              calm: { speaker: 'Fern', text: 'Tired. Yes, I can work with tired. There are sixteen locks. Each switch flips itself and its neighbours in the same row and column, one space away. They must all be dark.', choices: [
+              calm: { speaker: 'Fern', afterFlag: 'c3_vault_open', afterText: 'You freed the door. The cold drawers are holding temperature, and I can check the seeds one row at a time.', text: 'Tired. Yes, I can work with tired. There are sixteen locks. Each switch flips itself and its neighbours in the same row and column, one space away. They must all be dark.', choices: [
                 { text: '“I can do fiddly.”', next: 'end' }
               ] },
               uncertain: { speaker: 'Fern', text: 'Perhaps. I would like to finish this count first. I can show you the vault controls from here.', choices: [
                 { text: '“Show me the locks.”', next: 'what' }
               ] },
-              what: { speaker: 'Fern', text: 'Sixteen locks in a grid. A switch flips itself and the lights immediately above, below, left and right. Put them all out to open the vault.', choices: [
+              what: { speaker: 'Fern', afterFlag: 'c3_vault_open', afterText: 'You freed the door. The cold drawers are holding temperature, and I can check the seeds one row at a time.', text: 'Sixteen locks in a grid. A switch flips itself and the lights immediately above, below, left and right. Put them all out to open the vault.', choices: [
                 { text: '“I can do fiddly.”', next: 'end' }
               ] },
               end: { speaker: 'Fern', text: 'I will be here, watering things that do not need water.', choices: [{ id: 'done', text: 'Done', setFlag: 'c3_fern1_heard' }] }
             }
           }
         },
-        { id: 'c3_p_lights', label: 'Work the vault locks', puzzle: 'lights', setFlag: 'c3_vault_open', xp: 30,
+        { id: 'c3_p_lights', label: 'Work the vault locks', puzzle: 'lights', console: 'Sixteen-lock interlock', setFlag: 'c3_vault_open', xp: 30,
           text: 'Every lock-light goes dark. The vault door slides into the wall, and cold air spills across the floor.',
           bypassText: 'You wait while the vault runs the service release. The lights go dark in rows, and the vault opens.' },
         { id: 'c3_door1', label: 'Walk to the dome', needFlag: 'c3_vault_open', exit: true,
@@ -88,7 +89,11 @@ window.Story[3] = {
       id: 8,
       title: 'The Dome',
       intro: 'Beneath the ark’s great glass dome stand three small greenhouses, Dome, Vine and Moss. An old rota lists Ana, Bo and Cy. Two of the botanists meet you by the notice board, each pointing to a different line.',
-      afterIntro: 'A clean copy of the rota sits beside the door. The three houses each have a name beside them.',
+      afterIntro: 'The grow lights are on, and each house has a name on the revised rota. Ana and Cy are still talking by the board.',
+      narration: [
+        { needAll: ['c3_crew_set', 'c3_crew_calm'], text: 'The revised rota is posted. Ana and Cy have their assignments, and the passage to the water room is clear.' },
+        { needFlag: 'c3_crew_calm', text: 'Ana and Cy make room at the board for you to finish the rota.' }
+      ],
       goals: [
         { text: 'Fix the rota', needFlag: 'c3_crew_set' },
         { text: 'Settle the argument', needFlag: 'c3_crew_calm' }
@@ -120,7 +125,7 @@ window.Story[3] = {
             }
           }
         },
-        { id: 'c3_p_assign', label: 'Fix the rota', puzzle: 'assign', setFlag: 'c3_crew_set', xp: 30,
+        { id: 'c3_p_assign', label: 'Fix the rota', puzzle: 'assign', console: 'Verdant shift board', setFlag: 'c3_crew_set', xp: 30,
           text: 'The rota has one name under each house. You leave a clean copy on the board where all three botanists can see it.',
           bypassText: 'You check the houses in the archived watering logs. Ana tends Vine, Bo tends Moss and Cy tends Dome. You post the clean copy.' },
         { id: 'c3_door2', label: 'Go to the water room', needAll: ['c3_crew_set', 'c3_crew_calm'], exit: true,
@@ -144,7 +149,7 @@ window.Story[3] = {
         { id: 'c3_look3', label: 'Inspect the return pipes', xp: 5,
           afterFlag: 'c3_water_flows', afterText: 'Water runs behind the return window. The green feeder lamp confirms it is reaching the dome.',
           text: 'A bead gathers at a joint, then drops into the empty tray. The main feeder stays dry. Until the eight sections line up, water will not reach the dome.' },
-        { id: 'c3_p_sliding', label: 'Rebuild the water line', puzzle: 'sliding', setFlag: 'c3_water_flows', xp: 30,
+        { id: 'c3_p_sliding', label: 'Rebuild the water line', puzzle: 'sliding', console: 'Dome return line', setFlag: 'c3_water_flows', xp: 30,
           text: 'The sections settle into order. Water fills the return window and the dome’s feeder light turns green.',
           bypassText: 'You open the service feed and wait for it to fill. Water reaches the dome through the backup line.' },
         {
@@ -156,7 +161,7 @@ window.Story[3] = {
               a: { speaker: 'Fern', text: 'Water flows again. Thank you. We have enough seed stock for one plan. We could grow it here, keep it safe for another world, or send it out to find one. Which would you choose?', choices: [
                 { text: '“Replant the dome. Let it grow here.”', next: 'replant' },
                 { text: '“Seal the seeds in the vault for the next world.”', next: 'vault' },
-                { text: '“Open the glass. Give the seeds a chance somewhere beyond the fleet.”', id: 'c3_fern_release', check: { stat: 'emp', dc: 14, onPass: 'release', onFail: 'pause' }, xp: 25 },
+                { text: '“Open the glass. Give the seeds a chance somewhere beyond the fleet.”', id: 'c3_fern_release', unlock: 'Fern is ready to confirm seed release.', check: { stat: 'emp', dc: 14, onPass: 'release', onFail: 'pause' }, xp: 25 },
                 { text: '“Let me think a little longer.”', next: 'think' }
               ] },
               think: { speaker: 'Game Master', text: 'You have time. Through the return window, you can follow one bubble the whole length of the pipe.', choices: [

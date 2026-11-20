@@ -1,4 +1,5 @@
 import { T, box, tube, mesh, beam, shadow, person, lettering } from './geometry.js';
+import { buildCharacter } from './characters.js';
 import { sizes } from './layouts.js';
 
 const steel = 0x718694;
@@ -26,6 +27,24 @@ function station(group, type, c) {
         (col - 2) * .25, 1.08, (row - 1.5) * .17, true);
       if (active) strips.push(tile);
     }
+  } else if (type === 'decoder') {
+    screen(group, 1.35, .52, 0, 1.3, -.21, c);
+    lettering(group, 'DL HYL UVA HSVUL', 1.32, -.089, { scale: .53 });
+    for (const x of [-.53, .53]) {
+      strips.push(box(group, .1, .054, .054, c.accent, x, 1.05, .3, true));
+    }
+  } else if (type === 'locks') {
+    for (let row = 0; row < 4; row++) for (let col = 0; col < 4; col++) {
+      const x = (col - 1.5) * .25;
+      const z = (row - 1.5) * .19;
+      box(group, .21, .085, .16, c.dark, x, 1.095, z);
+      strips.push(box(group, .12, .02, .085, c.accent, x, 1.145, z, true));
+    }
+  } else if (type === 'pipeFrame') {
+    for (const x of [-.44, 0, .44]) {
+      beam(group, [x, 1.07, .29], [x, 1.41, -.24], .09, brass);
+      strips.push(box(group, .055, .07, .28, c.accent, x, 1.29, .024, true));
+    }
   } else if (type === 'pads') {
     const colors = [0xf68199, 0xf5b857, 0x76dfa6, 0x75acfa];
     colors.forEach((color, i) => {
@@ -42,6 +61,7 @@ function station(group, type, c) {
       const face = tube(group, .132, .132, .12, c.dark, x, 1.18, -.119, 12);
       face.rotation.x = Math.PI / 2;
       if (type === 'valves') {
+        strips.push(box(group, .13, .035, .04, c.accent, x, 1.41, -.12, true));
         box(group, .28, .037, .044, white, x, 1.18, -.054);
         box(group, .037, .27, .044, white, x, 1.18, -.054);
         lettering(group, 'ABCD'[i], 1.11, .33, { x, scale: .42 });
@@ -75,6 +95,9 @@ function pod(group, open, c) {
   for (const x of [-.68, .68]) box(group, .09, .37, 1.22, steel, x, .45);
   box(group, 1.08, .048, .036, c.accent, 0, .33, .58, true);
   if (open) {
+    const lid = mesh(group, new T.CapsuleGeometry(.43, .57, 3, 8), glass, 0, .86, -.48);
+    lid.rotation.z = Math.PI / 2;
+    lid.scale.set(.54, 1, .17);
     box(group, .28, .04, .19, brass, .26, .79, .04);
     box(group, .16, .044, .026, white, .26, .804, .04);
   }
@@ -115,7 +138,7 @@ function plant(group, x, z, variant) {
   }
 }
 
-function greenhouse(group, c) {
+function greenhouse(group, c, name) {
   box(group, 3.35, .18, 2.8, c.hull, 0, .09);
   for (const z of [-1.32, 0, 1.32]) {
     const outline = [[-1.62, .18, z], [-1.62, 1.18, z], [0, 2.08, z], [1.62, 1.18, z], [1.62, .18, z]];
@@ -127,8 +150,12 @@ function greenhouse(group, c) {
       { material: { transparent: true, opacity: .24, depthWrite: false } });
     pane.renderOrder = 2;
   }
-  for (let i = 0; i < 6; i++) plant(group, (i % 3 - 1) * .91, i < 3 ? -.62 : .6,
-    [0x86b965, 0x559a63, 0xb8ba78][i % 3]);
+  const foliage = { DOME: 0x9bc86f, VINE: 0x52975d, MOSS: 0xd2be77 };
+  for (let i = 0; i < 6; i++) plant(group, (i % 3 - 1) * .91, i < 3 ? -.62 : .6, foliage[name]);
+  if (name === 'VINE') {
+    for (const x of [-1.16, 0, 1.16]) beam(group, [x, .2, -.66], [x, 1.52, -.66], .043, 0x857147);
+    beam(group, [-1.17, 1.38, -.66], [1.17, 1.38, -.66], .049, 0x91ad59);
+  }
 }
 
 export function buildProp(parent, prop, c) {
@@ -136,14 +163,29 @@ export function buildProp(parent, prop, c) {
   group.position.set(prop.x, 0, prop.z);
   parent.add(group);
   const [w, d, h] = sizes[prop.type];
-  shadow(group, w, d);
   const type = prop.type;
   let status = { lights: [] };
+  shadow(group, w, d);
   if (type === 'door' || type === 'vault') status = door(group, type === 'vault', c);
   else if (type === 'pod' || type === 'openPod') pod(group, type === 'openPod', c);
   else if (type === 'crate') crate(group, c);
-  else if (type === 'greenhouse') greenhouse(group, c);
-  else if (type === 'robot') {
+  else if (type === 'crateStack') {
+    for (const y of [.42, 1.18, 1.94]) {
+      box(group, w, .69, d, y === 1.18 ? steel : c.hull, 0, y);
+      box(group, .49, .13, .06, c.accent, 0, y, d / 2 + .03);
+    }
+  } else if (type === 'tankBank') {
+    for (const z of [-1.1, 0, 1.1]) {
+      tube(group, .3, .39, 1.5, steel, 0, .82, z);
+      for (const y of [.32, 1.12]) tube(group, .4, .4, .12, c.dark, 0, y, z);
+    }
+  } else if (type === 'greenhouse') {
+    greenhouse(group, c, prop.name);
+    for (const x of [-.78, .78]) {
+      box(group, .88, .19, 2.44, 0x453932, x, .24);
+      status.lights.push(box(group, .54, .06, .045, c.accent, x, .4, 1.12, true));
+    }
+  } else if (type === 'robot') {
     box(group, .77, .34, .77, c.dark, 0, .22);
     tube(group, .37, .46, .6, brass, 0, .65, 0, 6);
     box(group, .63, .3, .45, steel, 0, 1.04);
@@ -161,6 +203,9 @@ export function buildProp(parent, prop, c) {
     for (const y of [.42, .83, 1.24]) {
       box(group, 1.47, .32, .06, glass, 0, y, .47);
       box(group, .34, .052, .085, c.dark, 0, y + .04, .51);
+      for (const x of [-.52, .52]) {
+        status.lights.push(box(group, .095, .13, .045, c.accent, x, y, .515, true));
+      }
     }
   } else if (type === 'scale') {
     box(group, 1.69, .18, .84, c.dark, 0, .13);
@@ -182,11 +227,22 @@ export function buildProp(parent, prop, c) {
   } else {
     status.lights = station(group, type, c);
   }
+  if (prop.character) {
+    const figure = buildCharacter(group, prop.character);
+    figure.position.set(0, 1.18, -.13);
+    figure.rotation.y = .16;
+    figure.scale.setScalar(1.05);
+    status.figure = figure;
+    box(group, .65, .06, .48, c.bright, 0, 1.11, -.12, true);
+  }
+  if (prop.hotspot === 'c1_listen') {
+    lettering(group, 'D → W', 1.36, .34, { scale: .55 });
+  }
   const badgeZ = type === 'door' || type === 'vault' ? .47 : .053;
-  if (prop.name) lettering(group, prop.name, h + .17, badgeZ, { badge: !!prop.hotspot });
+  if (prop.name) lettering(group, prop.name, h + (prop.character ? 1.16 : .17), badgeZ, { badge: !!prop.hotspot });
   if (prop.hotspot) {
     group.userData.hotspot = prop.hotspot;
-    const marker = mesh(group, new T.OctahedronGeometry(.11), c.accent, 0, h + .48, badgeZ, { glow: true });
+    const marker = mesh(group, new T.OctahedronGeometry(.11), c.accent, 0, h + (prop.character ? 1.49 : .48), badgeZ, { glow: true });
     status.marker = marker;
   }
   return { group, ...status };
@@ -198,7 +254,12 @@ export function updateProp(prop, visual, run, status, colors) {
     visual.marker.material.color.set(status === 'Locked' ? 0xffba82 : ready ? green : colors.accent);
     visual.marker.scale.set(status === 'Locked' ? 1.5 : 1, ready ? .6 : 1, 1);
   }
-  for (const light of visual.lights) light.material.color.set(ready ? green : prop.flag ? 0xa06651 : colors.accent);
+  for (const light of visual.lights) {
+    light.material.color.set(ready ? green : prop.flag ? 0xa06651 : colors.accent);
+    if (prop.type === 'locks') light.visible = !ready;
+    if (prop.type === 'gauges' && prop.flag === 'c1_air_ok' && ready) light.rotation.z = .28;
+  }
+  if (visual.figure) visual.figure.visible = status !== 'Locked';
   visual.panels?.forEach((panel, i) => { panel.position.x = (i ? 1 : -1) * (ready ? .95 : .43); });
   if (visual.inset) visual.inset.visible = !ready;
   if (visual.load) visual.load.visible = ready;

@@ -17,6 +17,10 @@ export function nodeChoices(hotspot, nodeId) {
     ({ ...choice, id: choice.id ?? `${hotspot.id}.${nodeId}.${index}` }));
 }
 
+export function choiceAvailable(run, choice) {
+  return !choice.needItem || run.inventory.includes(choice.needItem);
+}
+
 export function followChoice(run, hotspot, choice, next = choice.next) {
   setFlag(run, choice.setFlag, chapters, items);
   award(run, choice.id, choice.xp);

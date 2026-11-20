@@ -1,0 +1,61 @@
+.speaker-badge, .party-name { display: flex; align-items: center; gap: .65rem; }
+.portrait {
+  width: 2.65rem;
+  height: 2.65rem;
+  flex: 0 0 auto;
+  padding: .2rem;
+  border: 1px solid var(--line);
+  border-radius: .45rem;
+  background: #0b1623;
+}
+.unlock-note { color: var(--good); font-size: .88rem; }
+.choice-locked { opacity: .7; cursor: default; }
+.dice { display: flex; align-items: center; gap: .95rem; margin: 1rem 0; perspective: 28rem; }
+.die {
+  --die-color: #a4b9d7;
+  width: 5.25rem;
+  aspect-ratio: .93;
+  display: grid;
+  place-items: center;
+  position: relative;
+  isolation: isolate;
+  clip-path: polygon(50% 0, 97% 25%, 97% 73%, 50% 100%, 3% 73%, 3% 25%);
+  color: #112234;
+  background: color-mix(in srgb, var(--die-color), #0b1521 45%);
+  font: 800 1.72rem var(--mono);
+}
+.die.kept { --die-color: var(--accent); }
+.die::before, .die::after, .die i, .die b {
+  position: absolute;
+  inset: 0;
+  content: '';
+  z-index: -1;
+}
+.die::before { clip-path: polygon(50% 0, 3% 25%, 97% 25%); background: color-mix(in srgb, var(--die-color), white 42%); }
+.die::after { clip-path: polygon(3% 25%, 50% 79%, 97% 25%); background: var(--die-color); }
+.die i { clip-path: polygon(3% 73%, 50% 79%, 50% 100%, 97% 73%, 97% 25%, 50% 79%, 3% 25%); background: linear-gradient(120deg, #fff5, transparent 55%); }
+.die b { clip-path: polygon(97% 73%, 50% 79%, 50% 100%); background: #0003; }
+@media (prefers-reduced-motion: no-preference) {
+  .dice-enter .die { animation: reveal-die 620ms ease-out both; }
+  .dice-enter .die + .die { animation-delay: 75ms; }
+}
+@keyframes reveal-die {
+  0% { transform: translateY(-.7rem) rotateX(100deg) rotateZ(-86deg) scale(.65); opacity: .2; }
+  62% { transform: translateY(.12rem) rotateX(-19deg) rotateZ(11deg); }
+  82% { transform: translateY(-.13rem) rotateX(8deg) rotateZ(-5deg); }
+}
+
+.puzzle-console .console-origin { margin-bottom: .35rem; }
+.puzzle-console .scene { background: #0b1823; }
+.puzzle-console button:focus-visible { outline-offset: 2px; }
+.conduit-tile { box-shadow: inset 0 0 0 .18rem #070c19; }
+.vault-lock { box-shadow: inset 0 0 0 .24rem #142d294a; text-shadow: 0 1px #0005; }
+.pulse-note { margin-block: .7rem; }
+.pulse-note summary { cursor: pointer; color: var(--accent); }
+.valve-wheel { box-shadow: inset 0 0 0 .25rem #a47d4c64, inset 0 0 0 .4rem #101c29; }
+.valve-wheel[aria-pressed="true"] { box-shadow: inset 0 0 0 .25rem #8fdfab70, inset 0 0 0 .4rem #101c29; }
+.pipe-section { box-shadow: inset .27rem 0 #859d93, inset -.27rem 0 #859d93; }
+.pipe-section[aria-label$="Empty socket"] { box-shadow: inset 0 0 0 .22rem #1d3a3a; border-style: dashed !important; }
+#overlay .crate-rack .btn { margin: 0; box-shadow: inset .24rem 0 #79603c, inset -.24rem 0 #79603c; }
+.puzzle-tuner input[type="range"] { accent-color: var(--accent); }
+.puzzle-tuner output { min-width: 2ch; font-family: var(--mono); }

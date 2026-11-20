@@ -1,4 +1,7 @@
-import { T, palette, person, shadow } from './geometry.js';
+import { T, palette, shadow } from './geometry.js';
+import { buildCharacter, bobOffset } from './characters.js';
+import { buildSetpiece, updateSetpiece, animateSetpiece } from './setpieces.js';
+import { buildFinale } from './finale.js';
 import { layouts } from './layouts.js';
 import { distanceTo, reach, routeTo, walkable } from './navigation.js';
 import { buildProp, updateProp } from './props.js';
@@ -26,14 +29,13 @@ export function createWorld(canvas, handlers) {
   const ray = new T.Raycaster();
   const pointer = new T.Vector2();
   const keys = new Set();
-  let group, avatar, layout, room, colors, visuals, exteriorDetails;
+  const motion = window.matchMedia('(prefers-reduced-motion: reduce)');
+  let group, avatar, navigator, layout, room, colors, visuals, exteriorDetails, setpiece;
+  let finale = false;
   let last = performance.now(), width = 0, height = 0;
   let route = null, target = null, lastNear;
 
-  function setRoom(next) {
-    room = next;
-    layout = layouts[room.id];
-    colors = palette[room.chapter - 1];
+  function replaceScene() {
     if (group) {
       group.traverse(object => {
         object.geometry?.dispose();
@@ -44,21 +46,37 @@ export function createWorld(canvas, handlers) {
     }
     group = new T.Group();
     scene.add(group);
+    cancel();
+    canvas.style.cursor = '';
+    width = 0;
+  }
+
+  function setRoom(next) {
+    finale = false;
+    room = next;
+    layout = layouts[room.id];
+    colors = palette[room.chapter - 1];
+    replaceScene();
     buildShell(group, layout, room.id, colors);
     exteriorDetails = exterior(group, layout, room.id, colors);
+    setpiece = buildSetpiece(group, room.id, colors);
     visuals = layout.props.map(prop => buildProp(group, prop, colors));
     avatar = new T.Group();
     group.add(avatar);
     avatar.position.set(0, 0, layout.spawn);
     avatar.rotation.y = Math.PI;
     shadow(avatar, .89, .8);
-    person(avatar, 0xf3ce9e);
-    cancel();
-    canvas.style.cursor = '';
-    width = 0;
+    navigator = buildCharacter(avatar, 'navigator');
+  }
+
+  function setFinale(flags) {
+    finale = true;
+    replaceScene();
+    buildFinale(group, flags);
   }
 
   function update(run) {
+    updateSetpiece(setpiece, run.flags, colors);
     layout.props.forEach((prop, index) => {
       const hotspot = room.hotspots.find(entry => entry.id === prop.hotspot);
       updateProp(prop, visuals[index], run, hotspot && hotspotStatus(run, hotspot), colors);
@@ -129,7 +147,7 @@ export function createWorld(canvas, handlers) {
   function draw(now) {
     const dt = Math.min((now - last) / 1000, .04);
     last = now;
-    if (!canvas.clientWidth || !canvas.clientHeight || !layout) return;
+    if (!canvas.clientWidth || !canvas.clientHeight || (!layout && !finale)) return;
     if (handlers.active()) {
       move(dt);
       if (!target && handlers.active()) {
@@ -145,13 +163,25 @@ export function createWorld(canvas, handlers) {
       height = canvas.clientHeight;
       renderer.setSize(width, height, false);
       const ratio = width / height;
-      const half = Math.max(layout.z * .91 + 2.7, (layout.x + 1.45) / ratio);
+      const half = finale ? Math.max(5.85, 8.75 / ratio)
+        : Math.max(layout.z * .91 + 2.7, (layout.x + 1.45) / ratio);
       camera.left = -half * ratio;
       camera.right = half * ratio;
       camera.top = half;
       camera.bottom = -half;
       camera.updateProjectionMatrix();
     }
+    if (finale) {
+      camera.position.set(3, 9.5, 17);
+      camera.lookAt(.5, 1.3, 0);
+      renderer.render(scene, camera);
+      return;
+    }
+    navigator.position.y = bobOffset(now, 0, motion.matches);
+    visuals.forEach(({ figure }, i) => {
+      if (figure) figure.position.y = 1.18 + bobOffset(now, i, motion.matches);
+    });
+    animateSetpiece(setpiece, now, motion.matches);
     const x = avatar.position.x * .12;
     const z = avatar.position.z * .1;
     camera.position.set(x, 15.9, 14.6 + z);
@@ -160,13 +190,18 @@ export function createWorld(canvas, handlers) {
   }
 
   function objectAt(event) {
-    if (!width || !height) return null;
+    if (!width || !height || finale) return null;
     const bounds = canvas.getBoundingClientRect();
     pointer.set((event.clientX - bounds.left) / bounds.width * 2 - 1,
       1 - (event.clientY - bounds.top) / bounds.height * 2);
     ray.setFromCamera(pointer, camera);
     const hit = ray.intersectObjects(visuals.map(visual => visual.group), true)
-      .find(entry => entry.object.visible);
+      .find(({ object }) => {
+        for (let part = object; part; part = part.parent) {
+          if (!part.visible) return false;
+        }
+        return true;
+      });
     let object = hit?.object;
     while (object && !object.userData.hotspot) object = object.parent;
     return object?.userData.hotspot;
@@ -205,6 +240,6 @@ export function createWorld(canvas, handlers) {
   window.addEventListener('keyup', event => keys.delete(event.key.toLowerCase()));
   window.addEventListener('blur', cancel);
   renderer.setAnimationLoop(draw);
-  return { setRoom, update, guide, cancel, stop: () => renderer.setAnimationLoop(null),
+  return { setRoom, setFinale, update, guide, cancel, stop: () => renderer.setAnimationLoop(null),
     get position() { return avatar?.position; } };
 }

@@ -49,7 +49,7 @@ export function start(el, ctx, done) {
   var stopped = false, solving = false, playing = false, manualStep = null;
   var timers = [];
 
-  el.appendChild(mk('h2', {}, 'Pad memory'));
+  el.appendChild(mk('h2', {}, 'Reed approach pattern'));
   el.appendChild(mk('p', { 'class': 'small' },
     'The panel keeps a five-step access sequence. Watch it light the pads, then press the ' +
     'same pads in the same order. Watch plays continuously. Step through reveals one cue at a time ' +

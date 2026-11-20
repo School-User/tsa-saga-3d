@@ -41,7 +41,7 @@ export function createModal(defaultFocus, onOpen) {
   });
   dialog.addEventListener('keydown', event => {
     if (event.key !== 'Tab') return;
-    const controls = [...content.querySelectorAll('button, input, select, a[href], [tabindex]')]
+    const controls = [...content.querySelectorAll('button, input, select, summary, a[href], [tabindex]')]
       .filter(node => node.tabIndex >= 0 && !node.disabled && node.checkVisibility());
     const first = controls[0];
     const last = controls.at(-1);

@@ -23,7 +23,7 @@ export function start(el, ctx, done) {
   var failures = 0, stopped = false, solving = false, timer;
   var selects = {};
 
-  el.appendChild(mk('h2', {}, 'Greenhouse rota'));
+  el.appendChild(mk('h2', {}, 'Verdant greenhouse rota'));
   el.appendChild(mk('p', { 'class': 'small' },
     'Three botanists, three greenhouses. Each tends a different one. Read the clues, then ' +
     'fill in the rota and check it.'));

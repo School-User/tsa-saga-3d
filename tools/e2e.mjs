@@ -115,6 +115,12 @@ async function play({ send, evaluate }) {
       await interact(gated.id);
       await back();
     }
+    if (room === 2) {
+      await interact('c1_lab');
+      assert.equal(await evaluate('window.__game.choose("c1_lab_archive")'), false);
+      assert.equal(await evaluate('document.querySelector("[data-choice=c1_lab_archive]").getAttribute("aria-disabled")'), 'true');
+      await back();
+    }
     for (const hotspot of hotspots.filter(entry => entry.text && !entry.puzzle)) {
       await interact(hotspot.id);
       await back();
@@ -122,6 +128,8 @@ async function play({ send, evaluate }) {
 
     if (room === 2) {
       await interact('c1_lab');
+      assert.equal(await evaluate('document.querySelector("[data-choice=c1_lab_archive]").getAttribute("aria-disabled")'), 'false');
+      assert.equal(await evaluate('document.querySelectorAll(".speaker-badge .portrait").length'), 2);
       await roll('c1_lab_eng', 7, 'disadvantage', 10, false);
       // Reload while the dice are on screen and continue the saved dialogue.
       await send('Page.reload');
@@ -142,6 +150,7 @@ async function play({ send, evaluate }) {
     if (room === 3) {
       await interact(gated.id);
       await roll('c1_veil_sci', 20, 'normal', 19, true);
+      assert.match(await evaluate('document.querySelector(".unlock-note").textContent'), /phase clue/);
       await choose('continue');
       await choose('c1_talk.study.0');
       await choose('c1_talk.fin.0');
@@ -198,7 +207,9 @@ async function play({ send, evaluate }) {
   assert.equal(Object.keys(finale.journal).length, 20);
   assert.equal(await evaluate('document.querySelector("h1").textContent'), 'The Long Quiet');
   assert.equal(await evaluate('document.querySelectorAll(".epilogue p").length'), 3);
-  await until(() => evaluate('document.querySelector(".card-art img").naturalWidth > 0'));
+  assert.match(await evaluate('document.querySelector(".finale-art figcaption").textContent'), /lit for planting/);
+  assert.equal(await evaluate('document.querySelector(".finale-art").contains(document.querySelector("#world"))'), true);
+  await verifyCanvas(evaluate);
   await shot('finale');
 
   await send('Page.navigate', { url: server.url + '/' });

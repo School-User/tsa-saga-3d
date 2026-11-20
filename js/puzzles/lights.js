@@ -19,15 +19,15 @@ export function start(el, ctx, done) {
 
   el.appendChild(mk('h2', {}, 'Seed vault locks'));
   el.appendChild(mk('p', { 'class': 'small' },
-    'The vault locks are lit in patches. Each press flips one cell and the four cells ' +
-    'touching it. Put every cell out. Arrow keys move, Enter or Space presses.'));
+    'Amber lamps mark engaged locks. Each press flips one lock and the four locks ' +
+    'beside it. Release every lock. Arrow keys move, Enter or Space presses.'));
 
   if (sci) {
     el.appendChild(mk('p', { 'class': 'small' }, 'Hint: Four presses are enough.'));
   }
 
   var grid = mk('div', {
-    role: 'group', 'aria-label': 'Lights grid, 4 rows by 4 columns',
+    role: 'group', 'aria-label': 'Seed vault interlocks, 4 rows by 4 columns',
     style: 'display:grid;grid-template-columns:repeat(4,minmax(3rem,3.6rem));gap:.4rem;' +
            'margin:.75rem 0;max-width:16rem'
   });
@@ -37,7 +37,7 @@ export function start(el, ctx, done) {
     buttons[r] = [];
     for (var c = 0; c < SIZE; c++) {
       var b = mk('button', {
-        type: 'button',
+        type: 'button', 'class': 'vault-lock',
         style: 'font:inherit;font-size:1.4rem;line-height:1;padding:.7rem 0;' +
                'border:2px solid var(--line);border-radius:.6rem;cursor:pointer;' +
                'min-height:2.8rem'
@@ -98,12 +98,12 @@ export function start(el, ctx, done) {
     for (var r = 0; r < SIZE; r++) {
       for (var c = 0; c < SIZE; c++) {
         var lit = cells[r][c] === 1, b = buttons[r][c];
-        b.textContent = lit ? '●' : '·';
+        b.textContent = lit ? '◆' : '◇';
         b.setAttribute('aria-pressed', lit ? 'true' : 'false');
         b.setAttribute('aria-label', 'Row ' + (r + 1) + ', column ' + (c + 1) + ', ' +
-          (lit ? 'lit' : 'dark'));
+          (lit ? 'lit, engaged' : 'dark, released'));
         b.setAttribute('tabindex', (r === focusR && c === focusC) ? '0' : '-1');
-        b.style.background = lit ? 'var(--accent)' : 'transparent';
+        b.style.background = lit ? '#f3bc72' : '#142d29';
         b.style.color = lit ? '#071030' : 'var(--soft)';
       }
     }

@@ -3,6 +3,7 @@ import { hotspotStatus, meetsFlags, STATS } from '../state.js';
 import { presentCompanions } from '../checks.js';
 import { layouts } from '../world/layouts.js';
 import { direction } from '../world/navigation.js';
+import { portrait } from './portraits.js';
 import { button, el, section, list } from './dom.js';
 
 const panelTitles = {
@@ -54,10 +55,11 @@ function inventory(content, run) {
 }
 
 function party(content, room, run) {
+  partyMember(content, 'navigator', 'Navigator · Present', 'Fleet Navigator');
   const present = presentCompanions(run, companions);
   for (const companion of companions) {
     const joined = present.includes(companion);
-    section(content, companion.name + (joined ? ' · Present' : ' · Away'), companion.joins);
+    partyMember(content, companion.id, companion.name + (joined ? ' · Present' : ' · Away'), companion.joins);
     const aids = companion.aid.map(aid => {
       const active = joined && meetsFlags(run, aid);
       const bonus = aid.advantage ? 'Advantage' : `+${aid.bonus} aid`;
@@ -70,6 +72,15 @@ function party(content, room, run) {
       }
     }
   }
+  if (run.flags.c1_contacted && run.flags.c1_ending_peace) {
+    partyMember(content, 'veil', 'The Veil · Present', 'Carries its memories aboard Meridian.');
+  }
+}
+
+function partyMember(content, id, name, text) {
+  const heading = el('h3', 'party-name', name);
+  heading.prepend(portrait(id));
+  content.append(heading, el('p', '', text));
 }
 
 function objects(content, room, run, ctx) {

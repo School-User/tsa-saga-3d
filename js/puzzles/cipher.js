@@ -11,10 +11,16 @@ export function decode(text, shift) {
 }
 
 export function start(content, ctx, done) {
-  const heading = el('h2', '', 'Caesar decoder');
+  const heading = el('h2', '', 'Decode the Veil’s signal');
   const signal = el('p', 'scene cipher-code', SIGNAL);
-  const mark = el('p', 'small', 'Known marker · Incoming D decodes as W.');
-  content.append(heading, el('p', 'small', 'Every letter was shifted by the same amount. Count backward from D to W, wrapping from A to Z, then apply that shift to the signal.'), signal, mark);
+  content.append(heading, el('p', 'small', 'The Veil repeats the same header with every burst. Count backward from the incoming marker to Meridian’s reference letter. Wrap from A to Z and transmit that shift.'), signal);
+  const mark = el('p', 'scene small', 'Pulse monitor calibration · Incoming D maps to W.');
+  if (ctx?.recorded?.('c1_listen')) content.append(mark);
+  else {
+    const monitor = el('details', 'pulse-note');
+    monitor.append(el('summary', '', 'Read the pulse monitor calibration plate'), mark);
+    content.append(monitor);
+  }
   content.append(el('p', 'cipher-code', 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'));
   if (ctx?.stat?.('sci') >= 4) {
     content.append(el('p', 'small', 'SCI 4 · A second marker pairs L with E. Cross-check your count without wrapping.'));

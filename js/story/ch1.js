@@ -46,7 +46,7 @@ window.Story[1] = {
       id: 1,
       title: 'Cryo Deck',
       intro: 'Cold blue light. Frost covers the sleeping pods except yours. The pressure door at the far end has no power. ORI’s cursor blinks on the wall terminal.',
-      afterIntro: 'The cryo console has power again. A steady green lamp marks the pressure door.',
+      afterIntro: 'Light follows the conduits from the pod banks to the pressure door. The two panels draw apart.',
       goals: [{ text: 'Restore power to the pressure door', needFlag: 'c1_power_on' }],
       banter: [
         { companion: 'ori', text: 'The chronometer says morning. It has said morning all week. We can start there if you like.' },
@@ -60,24 +60,24 @@ window.Story[1] = {
             start: 'a',
             nodes: {
               a: { speaker: 'ORI', text: '...Navigator? Systems... fragmented. I cannot tell which memories are mine. Please, do not switch me off.', choices: [
-                { text: '“You are safe. I am staying right here.”', id: 'c1_ori_calm', check: { stat: 'emp', dc: 13, onPass: 'calm', onFail: 'uncertain' }, setFlag: 'c1_ori_calm', xp: 15 },
+                { text: '“You are safe. I am staying right here.”', id: 'c1_ori_calm', unlock: 'ORI’s reassurance check at the lab gains advantage.', check: { stat: 'emp', dc: 13, onPass: 'calm', onFail: 'uncertain' }, setFlag: 'c1_ori_calm', xp: 15 },
                 { text: '“What happened to the ship?”', next: 'what' },
                 { text: '“Nobody is switching anything off.”', next: 'what' }
               ] },
-              calm: { speaker: 'ORI', text: 'That is the first steady thing anyone has said to me in four hundred days. The door is dead. Get the cryo console’s grid to carry power to it, and I can open it.', choices: [
+              calm: { speaker: 'ORI', afterFlag: 'c1_power_on', afterText: 'The pressure door is already open. Thank you for coming back to talk.', text: 'That is the first steady thing anyone has said to me in four hundred days. The door is dead. Get the cryo console’s grid to carry power to it, and I can open it.', choices: [
                 { text: '“I will take a look.”', next: 'end' }
               ] },
               uncertain: { speaker: 'Game Master', text: 'ORI’s cursor holds halfway through a word. A schematic appears. It seems easier for ORI to show you the ship than to talk about the missing hours.', choices: [
                 { text: '“Show me what happened.”', next: 'what' }
               ] },
-              what: { speaker: 'ORI', text: 'A pressure spike cut the grid. The crew woke in the wrong order. You are the only one awake aboard now. Route power from the source on the cryo console to the corridor door.', choices: [
+              what: { speaker: 'ORI', afterFlag: 'c1_power_on', afterText: 'A pressure spike cut the conduits. You restored the route, and the next deck is open.', text: 'A pressure spike cut the grid. The crew woke in the wrong order. You are the only one awake aboard now. Route power from the source on the cryo console to the corridor door.', choices: [
                 { text: '“Understood.”', next: 'end' }
               ] },
               end: { speaker: 'ORI', text: 'I will be here. I am always here. It is rather the problem.', choices: [{ id: 'done', text: 'Done', setFlag: 'c1_ori1_heard' }] }
             }
           }
         },
-        { id: 'c1_p_power', label: 'Repair the power grid', puzzle: 'power', setFlag: 'c1_power_on', xp: 30,
+        { id: 'c1_p_power', label: 'Repair the power grid', puzzle: 'power', console: 'Meridian conduit board', setFlag: 'c1_power_on', xp: 30,
           text: 'You trace the live route all the way to the door. Its indicator turns green and the lock draws back.',
           bypassText: 'You trace a slower service route from the backup supply. The door takes power and the lock draws back.' },
         { id: 'c1_look', label: 'Inspect the pod row', xp: 5,
@@ -92,7 +92,11 @@ window.Story[1] = {
       id: 2,
       title: 'Life Support',
       intro: 'Four valve wheels feed the ring that keeps the ship breathing. Above them a red needle inches downward. Beyond them, the laboratory door is sealed, and ORI’s text waits on a separate terminal.',
-      afterIntro: 'Air hums through the ring at a steady pressure. ORI’s terminal still shows the lab’s current clearance.',
+      afterIntro: 'The gauge needles settle and the valve bank lights hold steady. ORI still controls the lab lock.',
+      narration: [
+        { needAll: ['c1_air_ok', 'c1_lab_open'], text: 'The pressure holds. ORI releases the lock, and the lab door opens.' },
+        { needFlag: 'c1_lab_open', text: 'ORI has cleared the lab. The pressure interlock still needs the valve bank.' }
+      ],
       goals: [
         { text: 'Restore air pressure', needFlag: 'c1_air_ok' },
         { text: 'Get ORI to open the lab', needFlag: 'c1_lab_open' }
@@ -105,7 +109,7 @@ window.Story[1] = {
         { id: 'c1_gauges', label: 'Read the gauges', xp: 5,
           afterFlag: 'c1_air_ok', afterText: 'The needle holds in the green. The air ring is back at working pressure.',
           text: 'The display reads 61 percent. Open the valves in the wrong order and pressure rises too sharply. The reading marks the starting condition while you work.' },
-        { id: 'c1_p_valves', label: 'Work the valves', puzzle: 'valves', setFlag: 'c1_air_ok', xp: 30,
+        { id: 'c1_p_valves', label: 'Work the valves', puzzle: 'valves', console: 'Air pressure manifold', setFlag: 'c1_air_ok', xp: 30,
           text: 'The four valves settle into place. The needle steadies, then climbs.',
           bypassText: 'You use the service regulator to bring the air ring back to pressure. The needle steadies.' },
         { id: 'c1_log2', label: 'Read the maintenance log', xp: 5, giveItem: 'maintenance_log',
@@ -117,9 +121,11 @@ window.Story[1] = {
             nodes: {
               a: { speaker: 'ORI', text: 'The lab is sealed under protocol nine. An AI that loses its crew must keep every door closed. If I stop following the rule, I am afraid I will stop being me.', choices: [
                 { text: '“Rules are made for normal days. This is a different sort of day.”', next: 'rules' },
-                { text: '“I can help repair your memory core. Then you can decide.”', id: 'c1_lab_eng', check: { stat: 'eng', dc: 12, onPass: 'win', onFail: 'repair_pause', disadvantageUnless: 'c1_air_ok' }, setFlag: 'c1_lab_open', xp: 25 },
-                { text: '“Let’s read the version header together.”', id: 'c1_lab_sci', check: { stat: 'sci', dc: 12, onPass: 'win', onFail: 'version_pause', advantageWith: 'maintenance_log' }, setFlag: 'c1_lab_open', xp: 25 },
-                { text: '“I am afraid too. We can decide what to do together.”', id: 'c1_lab_emp', check: { stat: 'emp', dc: 12, onPass: 'win', onFail: 'trust_pause' }, setFlag: 'c1_lab_open', xp: 25 },
+                { text: '“I can help repair your memory core. Then you can decide.”', id: 'c1_lab_eng', unlock: 'ORI agrees to unlock the lab.', check: { stat: 'eng', dc: 12, onPass: 'win', onFail: 'repair_pause', disadvantageUnless: 'c1_air_ok' }, setFlag: 'c1_lab_open', xp: 25 },
+                { text: 'Show ORI the archived copy of protocol nine.', id: 'c1_lab_archive',
+                  needItem: 'maintenance_log', next: 'archive', setFlag: 'c1_lab_open', xp: 10 },
+                { text: '“Let’s read the version header together.”', id: 'c1_lab_sci', unlock: 'ORI agrees to unlock the lab.', check: { stat: 'sci', dc: 12, onPass: 'win', onFail: 'version_pause', advantageWith: 'maintenance_log' }, setFlag: 'c1_lab_open', xp: 25 },
+                { text: '“I am afraid too. We can decide what to do together.”', id: 'c1_lab_emp', unlock: 'ORI agrees to unlock the lab.', check: { stat: 'emp', dc: 12, onPass: 'win', onFail: 'trust_pause' }, setFlag: 'c1_lab_open', xp: 25 },
                 { text: 'Wait with ORI.', next: 'wait' }
               ] },
               rules: { speaker: 'ORI', text: 'That is what the crew said before the pressure spike. I am still holding a lot of things together here.', choices: [
@@ -137,6 +143,9 @@ window.Story[1] = {
               ] },
               wait: { speaker: 'ORI', text: '...You stayed. Nobody stays. All right. Slowly, then. I will open it. I am trusting you, Navigator.', choices: [
                 { text: '“I will meet you on the other side.”', next: 'done', id: 'c1_lab_patient', setFlag: 'c1_lab_open', xp: 10 }
+              ] },
+              archive: { speaker: 'ORI', text: 'This rule names another ship. I can release the lock and keep watching over Meridian. Thank you for bringing me the original.', choices: [
+                { text: '“See you inside, ORI.”', next: 'done' }
               ] },
               win: { speaker: 'ORI', text: 'Yes. That is a reason I can live with. I am opening the lab. Thank you for asking me to decide.', choices: [
                 { text: '“See you inside, ORI.”', next: 'done' }
@@ -164,8 +173,8 @@ window.Story[1] = {
       ],
       hotspots: [
         { id: 'c1_listen', label: 'Watch the signal repeat', xp: 5,
-          text: 'Three pulses, a gap, three pulses. You count out the next group, and the third mark appears exactly when you expect it.' },
-        { id: 'c1_p_cipher', label: 'Decode the message', puzzle: 'cipher', setFlag: 'c1_decoded', xp: 30,
+          text: 'Three pulses, a gap, three pulses. You count out the next group, and the third mark appears exactly when you expect it. The deck’s calibration plate matches incoming D with W on Meridian’s alphabet.' },
+        { id: 'c1_p_cipher', label: 'Decode the message', puzzle: 'cipher', console: 'Veil reply encoder', setFlag: 'c1_decoded', xp: 30,
           text: 'The scrambled letters fall into place. The message reads: WE ARE NOT ALONE.',
           bypassText: 'You let the relay compare the shifts one at a time. When it finishes, the screen reads WE ARE NOT ALONE.' },
         {
@@ -176,8 +185,8 @@ window.Story[1] = {
             nodes: {
               a: { speaker: 'The Veil', text: 'WE ARE NOT ALONE, you said. Correct. We are the Veil, a ship like yours, but older. Our crew is gone. We have repeated that message for nine hundred years. Yours is the first answer.', choices: [
                 { text: '“I am answering. Tell me what you need.”', next: 'need' },
-                { text: '“I want to understand how your signal works.”', id: 'c1_veil_sci', check: { stat: 'sci', dc: 12, onPass: 'study', onFail: 'patterns_pause' }, setFlag: 'c1_knows_signal', xp: 20 },
-                { text: '“You sound lonely.”', id: 'c1_veil_emp', check: { stat: 'emp', dc: 12, onPass: 'peace', onFail: 'words_pause' }, xp: 20 }
+                { text: '“I want to understand how your signal works.”', id: 'c1_veil_sci', unlock: 'You can discuss preserving a recording. The Veil’s phase clue is recorded for the Harbor Nine beacon.', check: { stat: 'sci', dc: 12, onPass: 'study', onFail: 'patterns_pause' }, setFlag: 'c1_knows_signal', xp: 20 },
+                { text: '“You sound lonely.”', id: 'c1_veil_emp', unlock: 'You can invite the Veil aboard.', check: { stat: 'emp', dc: 12, onPass: 'peace', onFail: 'words_pause' }, xp: 20 }
               ] },
               patterns_pause: { speaker: 'The Veil', text: 'We can see you working on the pattern. Stay in range a little longer, please. There is something we meant to ask.', choices: [
                 { text: '“What do you need?”', next: 'need' }

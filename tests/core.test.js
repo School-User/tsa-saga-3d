@@ -6,7 +6,7 @@ import { distanceTo, routeTo, walkable } from '../js/world/navigation.js';
 
 globalThis.window = {};
 const { chapters, classes, rooms, items, companions, journalSize } = await import('../js/story/data.js');
-const { openDialogue, nodeChoices, followChoice, advanceDialogue } = await import('../js/dialogue.js');
+const { openDialogue, nodeChoices, choiceAvailable, followChoice, advanceDialogue } = await import('../js/dialogue.js');
 const engineer = classes[0];
 const fresh = () => state.newRun(engineer);
 const find = id => rooms.flatMap(room => room.hotspots).find(hotspot => hotspot.id === id);
@@ -74,6 +74,18 @@ flag(run, 'c3_fern_calm');
 assert.equal(checkTerms(run, choice('c3_fern_release'), companions).mode, 'advantage');
 
 const lab = find('c1_lab');
+const archive = fresh();
+const archiveReply = nodeChoices(lab, 'a').find(entry => entry.id === 'c1_lab_archive');
+assert.equal(choiceAvailable(archive, archiveReply), false);
+state.collect(archive, 'maintenance_log');
+assert.equal(choiceAvailable(archive, archiveReply), true);
+openDialogue(archive, lab);
+followChoice(archive, lab, archiveReply);
+assert.equal(archive.dialogues[lab.id].node, 'archive');
+assert.equal(archive.flags.c1_lab_open, true);
+assert.deepEqual(archive.rolls, {});
+assert.equal(archive.xp, 10);
+
 const cursor = openDialogue(run, lab);
 cursor.pending = repair.id;
 const storage = new Map();
@@ -189,4 +201,5 @@ assert.equal(training.points, 4);
 assert.equal(training.xp, 400);
 assert.deepEqual([0, 44, 45, 89, 90, 359, 360].map(state.rankFor), [1, 1, 2, 2, 3, 8, 9]);
 await import('./puzzles.test.js');
+await import('./visuals.test.js');
 console.log('Core tests passed for checks, saves, chapter revisits, nine room gates and paths, XP, and puzzle controls.');

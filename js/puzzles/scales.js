@@ -1,4 +1,4 @@
-// Life support balance: nine identical crates, one heavier. Weigh at most three times.
+// Cargo bay balance: nine identical crates, one heavier. Weigh at most three times.
 // Any pan may hold any number of crates; an empty pan is refused rather than weighed.
 var HEAVY = 7;
 var MAX_WEIGHS = 3;
@@ -19,7 +19,7 @@ export function start(el, ctx, done) {
   var stopped = false, solving = false;
   var timers = [];
 
-  el.appendChild(mk('h2', {}, 'Nine-crate balance'));
+  el.appendChild(mk('h2', {}, 'Freight balance'));
   el.appendChild(mk('p', { 'class': 'small' },
     'Nine crates look identical and one of them is heavier. Put crates on the left and ' +
     'right pans and weigh. You get ' + MAX_WEIGHS + ' weighings, then you must name the ' +
@@ -29,7 +29,7 @@ export function start(el, ctx, done) {
     el.appendChild(mk('p', { 'class': 'small' }, 'Hint: Try three against three first.'));
   }
 
-  var crateBox = mk('div', { role: 'group', 'aria-label': 'Crates',
+  var crateBox = mk('div', { role: 'group', 'aria-label': 'Crates', 'class': 'crate-rack',
     style: 'display:flex;flex-wrap:wrap;gap:.5rem;margin:.75rem 0' });
   for (var n = 1; n <= 9; n += 1) {
     (function (num) {
@@ -44,7 +44,7 @@ export function start(el, ctx, done) {
   }
   el.appendChild(crateBox);
 
-  var pansLine = mk('p', { 'class': 'small' });
+  var pansLine = mk('p', { 'class': 'small scene' });
   el.appendChild(pansLine);
 
   var weighRow = mk('div', { 'class': 'row' });

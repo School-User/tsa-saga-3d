@@ -1,7 +1,7 @@
 import { chapters, classes, items, companions, chapterAt, roomAt } from './story/data.js';
 import * as state from './state.js';
 import { d20, resolveCheck } from './checks.js';
-import { openDialogue, nodeChoices, followChoice, advanceDialogue } from './dialogue.js';
+import { openDialogue, nodeChoices, choiceAvailable, followChoice, advanceDialogue } from './dialogue.js';
 import { puzzles } from './puzzles/index.js';
 import { createWorld } from './world/view.js';
 import { get, el, button } from './ui/dom.js';
@@ -14,6 +14,7 @@ import { showDialogue } from './ui/dialogue.js';
 const test = new URLSearchParams(location.search).get('test') === '1';
 const root = get('screen');
 const roomScreen = get('room-screen');
+const canvas = get('world');
 const focusDefault = () => roomScreen.hidden ? root.querySelector('h1') : get('room-title');
 const modal = createModal(focusDefault, () => world?.cancel());
 const storage = getStorage();
@@ -98,10 +99,15 @@ function render() {
   roomScreen.hidden = run.screen !== 'room';
   root.hidden = !roomScreen.hidden;
   room = null;
-  if (run.screen === 'finale') showFinale(root, run, actions);
-  else if (run.screen !== 'room') showChapter(root, run, actions);
+  if (run.screen === 'finale') {
+    world?.setFinale(run.flags);
+    showFinale(root, run, actions, world ? canvas : null);
+  } else if (run.screen !== 'room') showChapter(root, run, actions);
   else {
     room = roomAt(run.room);
+    roomScreen.querySelector('.room-body').prepend(canvas);
+    canvas.setAttribute('aria-label', 'Walkable 3D view of the current room');
+    canvas.setAttribute('aria-describedby', 'walk-help');
     world?.setRoom(room);
     showRoomHud(room, run);
     refresh();
@@ -204,7 +210,7 @@ function choose(id) {
     else advanceDialogue(run, hotspot, result.next);
   } else {
     const choice = nodeChoices(hotspot, cursor.node).find(entry => entry.id === id);
-    if (!choice) return false;
+    if (!choice || !choiceAvailable(run, choice)) return false;
     if (choice.check) {
       animate = !run.rolls[id];
       resolveCheck(run, choice, companions, () => forcedRoll ?? d20());
@@ -226,8 +232,12 @@ function startPuzzle(hotspot) {
       .find(control => control.textContent === 'Back')?.click();
   }
   modal.open('puzzle', null, content => {
-    puzzles[hotspot.puzzle].start(content, {
-      stat: key => run.stats[key], hasFlag: flag => !!run.flags[flag]
+    const consolePanel = el('section', `puzzle-console puzzle-${hotspot.puzzle}`);
+    consolePanel.append(el('p', 'eyebrow console-origin', `${room.title} · ${hotspot.console}`));
+    content.append(consolePanel);
+    puzzles[hotspot.puzzle].start(consolePanel, {
+      stat: key => run.stats[key], hasFlag: flag => !!run.flags[flag],
+      recorded: id => !!run.journal[id]
     }, outcome => {
       activePuzzle = null;
       if (outcome.solved || outcome.skipped) finishPuzzle(hotspot, outcome.skipped);
@@ -246,7 +256,7 @@ function finishPuzzle(hotspot, bypass) {
   message(hotspot.label, text);
 }
 
-initializeHud(panel);
+initializeHud(panel, guide);
 document.addEventListener('keydown', event => {
   if (event.key === 'Escape' && room && !modal.kind && !event.repeat) {
     event.preventDefault();
@@ -257,7 +267,9 @@ document.addEventListener('keydown', event => {
 function graphicsUnavailable() {
   world?.stop();
   world = null;
-  get('world').hidden = true;
+  canvas.hidden = true;
+  const fallback = canvas.parentElement?.querySelector('.finale-art img');
+  if (fallback) fallback.hidden = false;
   get('walk-help').hidden = true;
   setPrompt(null);
   const message = get('graphics-message');
@@ -266,14 +278,14 @@ function graphicsUnavailable() {
 }
 
 try {
-  world = createWorld(get('world'), {
+  world = createWorld(canvas, {
     test, active: () => !!room && !modal.kind,
     eligible: id => !!byId(id),
     near: id => setPrompt(byId(id)),
     guide,
     interact
   });
-  get('world').addEventListener('webglcontextlost', graphicsUnavailable);
+  canvas.addEventListener('webglcontextlost', graphicsUnavailable);
 } catch {
   graphicsUnavailable();
 }

@@ -81,3 +81,18 @@ No verified blocker on a normal run. The original puzzles have separate bypass p
 | Storyline / Flow of the Game | 1 | 8 | 8 | Repairs and completed conversations now carry through to the room, reinforcing the existing three-chapter arc. |
 | Overall Appeal | 2 | 8 | 16 | Clearer onboarding, tap-to-walk interactions and a dedicated narrow-screen viewport improve access to the room. The final visual score is provisional pending the browser pass. |
 | **Estimated game subtotal** | | | **54 / 70** | |
+
+## Round 2 changes
+
+- **Visual identity.** ORI, Pilot Tamsin, Fern, the Veil and the Navigator now have distinct low-poly bodies and faces. Dialogue and Party use matching vector portraits. The character idle, water highlights and dice artwork respect reduced motion.
+- **Rooms and finale.** The room geometry includes a pod bank and conduit runs, pressure tanks, a signal dish, docking ring, crate stacks, a beacon mast, frosted drawers, greenhouse beds and a return-water channel. Repairs visibly power equipment, clear locks and open doors. The Verdant finale shows the ark in 3D with an open seed bay, a lit garden dome or a sealed vault according to the saved outcome.
+- **Puzzles and tabletop.** The room consoles now introduce their own equipment. The pulse-monitor inspection carries its calibration pair into the Veil decoder. A copy of the plate is also available at the decoder. The maintenance log unlocks a direct reply with ORI, successful checks identify the options or aid they unlock, and the Game Master accounts for both repairs and clearance. Cryo Deck has a one-action guided walk to the first repair.
+- **Verification.** The two Node suites and syntax checks pass. The tests cover the evidence reply, marker access, bypass thresholds, reduced-motion states and all three finale variants. The operator’s Chromium test now checks the evidence reply, successful-check feedback and the finale canvas. Chromium startup was denied in this workspace, so the browser capture and touch-layout checks remain pending.
+
+| Criterion | × | Estimated score /10 | Points | Reason |
+| --- | ---: | ---: | ---: | --- |
+| Creativity and Artisanship | 2 | 9 | 18 | Original character silhouettes and purpose-built ship equipment carry the fiction into the 3D scenes and consoles. |
+| Technical Skill | 2 | 8 | 16 | Saved outcomes now drive more scene and dialogue states. The updated browser pass is pending. |
+| Storyline / Flow of the Game | 1 | 9 | 9 | Evidence opens a reply, completed repairs change dialogue, and each seed decision has a visible ending. |
+| Overall Appeal | 2 | 9 | 18 | More legible rooms, a direct first action and a 3D reunion with the ark give the voyage a stronger visual arc. |
+| **Estimated game subtotal** | | | **61 / 70** | Provisional pending the operator’s browser pass. |

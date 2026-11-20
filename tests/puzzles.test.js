@@ -108,6 +108,11 @@ try {
   assert.equal(decode('D L', 7), 'W E');
   assert.equal(decode('DL HYL UVA HSVUL', 7), 'WE ARE NOT ALONE');
   const cipher = open('cipher');
+  assert.equal(cipher.content.querySelectorAll('details').length, 1);
+  const inspectedCipher = open('cipher', { stat: () => 5, recorded: id => id === 'c1_listen' });
+  assert.equal(inspectedCipher.content.querySelectorAll('details').length, 0);
+  assert.match(inspectedCipher.content.textContent, /Incoming D maps to W/);
+  assert.match(inspectedCipher.content.textContent, /L with E/);
   cipher.input('cipher-shift', '');
   cipher.button('Transmit').click();
   assert.match(cipher.content.textContent, /whole shift from 0 to 25/);
@@ -117,6 +122,13 @@ try {
   assert.match(cipher.content.textContent, /D → W/);
   cipher.button('Transmit').click();
   cipher.solved();
+  const cipherBypass = open('cipher');
+  for (let i = 1; i <= 3; i++) {
+    cipherBypass.button('Transmit').click();
+    assert.equal(cipherBypass.button('Skip puzzle (no XP)').hidden, i < 3);
+  }
+  cipherBypass.button('Skip puzzle (no XP)').click();
+  assert.deepEqual(cipherBypass.outcomes, [{ solved: false, skipped: true }]);
 
   const memory = open('memory');
   const step = memory.button('Step through');
@@ -151,6 +163,11 @@ try {
   const lights = open('lights');
   for (const index of [0, 6, 9, 15]) lights.controls()[index].click();
   lights.solved();
+  const lockBypass = open('lights');
+  for (let i = 1; i <= 20; i++) {
+    lockBypass.controls()[0].click();
+    assert.equal(lockBypass.button('Skip puzzle (no XP)').hidden, i < 20);
+  }
 
   const sliding = open('sliding');
   for (const tile of [3, 6, 5, 3, 8, 2, 3, 5, 6, 8, 5, 6]) sliding.button(String(tile)).click();

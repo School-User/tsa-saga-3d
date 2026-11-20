@@ -22,7 +22,7 @@ export function start(el, ctx, done) {
   el.appendChild(mk('h2', {}, 'Life support valves'));
   el.appendChild(mk('p', { 'class': 'small' },
     'Four valves feed the ring that keeps the ship breathing. Open them in the right order. ' +
-    'Check the maintenance log in Life Support for a clue. ' +
+    'Use the order engraved on the manifold plate. ' +
     'Click a valve, or focus it and press Enter or Space.'));
 
   var clues = mk('div', { 'class': 'panel' });
@@ -45,7 +45,7 @@ export function start(el, ctx, done) {
            'width:min(16rem,100%);margin:.5rem 0;' });
   el.appendChild(grid);
   letters.forEach(function (letter) {
-    var b = mk('button', { type: 'button',
+    var b = mk('button', { type: 'button', 'class': 'valve-wheel',
       style: 'font-size:1.6rem;font-weight:700;padding:.7rem 0;border:2px solid var(--line);' +
              'border-radius:.5rem;background:#0d142a;color:var(--fg);cursor:pointer;' +
              'touch-action:manipulation' }, letter);

@@ -46,9 +46,11 @@ export function buildShell(group, layout, id, c) {
     mesh(group, new T.BoxGeometry(x * 2, 1.86, .035), c.accent, 0, 1.48, -z,
       { glow: true, material: { transparent: true, opacity: .10, depthWrite: false } });
   }
-  for (let i = -z + 2; i <= z - 2; i += 2) {
-    box(group, .07, .017, .48, c.accent, -.76, .02, i, true);
-    box(group, .07, .017, .48, c.accent, .76, .02, i, true);
+  if ([1, 3, 4, 6, 7].includes(id)) {
+    for (let i = -z + 2; i <= z - 2; i += 2) {
+      box(group, .07, .017, .48, c.accent, -.76, .02, i, true);
+      box(group, .07, .017, .48, c.accent, .76, .02, i, true);
+    }
   }
   for (const side of [-1, 1]) for (let i = 0; i < 5; i++) {
     const stripe = box(group, .11, .015, .4, c.accent, side * (x - 1 + i * .15), .014, z - .39);

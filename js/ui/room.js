@@ -2,7 +2,7 @@ import { classes, chapterAt } from '../story/data.js';
 import { hotspotStatus, meetsFlags, rankFor, STATS } from '../state.js';
 import { get, el, button, statsText, title } from './dom.js';
 
-export function initializeHud(open) {
+export function initializeHud(open, guide) {
   const panels = [
     ['Journal', 'journal'], ['Inventory', 'inventory'], ['Party', 'party'],
     ['Room objects', 'objects'], ['Pause', 'pause']
@@ -12,6 +12,7 @@ export function initializeHud(open) {
     control.dataset.panel = id;
     get('room-nav').append(control);
   }
+  get('room-action').append(button('Walk to the cryo console', () => guide('c1_p_power'), 'btn ghost small'));
 }
 
 export function showRoomHud(room, run) {
@@ -30,9 +31,13 @@ export function updateHud(room, run) {
   const repaired = run.flags[puzzle.setFlag];
   const opening = room.id === 1 && !repaired;
   const passage = exitStatus === 'Open' ? ` Next step: ${exit.label}.` : '';
-  const direction = opening ? ' Start at the power grid, or use Room objects to find it.' : '';
+  const direction = opening ? ' Route power at the cryo console, or use Room objects to explore.' : '';
   get('room-nav').querySelector('[data-panel="objects"]').classList.toggle('first-route', opening);
-  const narration = (repaired ? room.afterIntro : room.intro) + passage + direction;
+  const action = get('room-action');
+  if (!opening && action.contains(document.activeElement)) get('room-title').focus();
+  action.hidden = !opening;
+  const outcome = room.narration?.find(entry => meetsFlags(run, entry));
+  const narration = (outcome?.text ?? (repaired ? room.afterIntro : room.intro)) + passage + direction;
   if (get('room-intro').textContent !== narration) get('room-intro').textContent = narration;
   const goals = room.goals.map(goal => {
     const completed = meetsFlags(run, goal);

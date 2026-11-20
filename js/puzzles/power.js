@@ -2,8 +2,8 @@
 // Types: s source (fixed), d door (fixed), l straight, c corner, t tee, e empty socket (fixed).
 // Arms are directions 0=N 1=E 2=S 3=W; rotating shifts every arm one step clockwise.
 var BASE = { s: [1], d: [3], l: [0, 2], c: [0, 1], t: [0, 1, 2], e: [] };
-var NAMES = { s: 'power source', d: 'pressure door', l: 'straight conductor',
-              c: 'corner conductor', t: 'tee conductor', e: 'empty socket' };
+var NAMES = { s: 'power source', d: 'pressure door', l: 'straight conduit',
+              c: 'elbow conduit', t: 'branch conduit', e: 'empty socket' };
 
 // ONE fixed hand-made layout, starting rotations included. Rotate clockwise only.
 //   row 1: t0  e0  l1  e0  c2
@@ -40,7 +40,7 @@ export function start(el, ctx, done) {
 
   el.appendChild(mk('h2', {}, 'Power routing'));
   el.appendChild(mk('p', { 'class': 'small' },
-    'Connect IN (power source, left) to OUT (pressure door, right). ' +
+    'Route power from Meridian’s cryo supply (IN) to the pressure door relay (OUT). ' +
     'Click a fitting, or focus it with the arrow keys and press Enter or Space, to turn it clockwise.' +
     (hint ? ' Faint dots mark the conductors on the live route.' : '')));
   el.appendChild(mk('p', { 'class': 'small' },
@@ -63,16 +63,16 @@ export function start(el, ctx, done) {
     var t = { type: spec.charAt(0), rot: Number(spec.charAt(1)), r: r, c: c };
     var fixed = t.type === 's' || t.type === 'd' || t.type === 'e';
     var b = mk('button', { type: 'button', tabindex: i === 0 ? '0' : '-1',
-      style: 'position:relative;aspect-ratio:1;padding:0;border:2px solid var(--line);' +
+      'class': 'conduit-tile', style: 'position:relative;aspect-ratio:1;padding:0;border:2px solid var(--line);' +
              'border-radius:.4rem;background:#0d142a;touch-action:manipulation;' +
              (fixed ? 'border-style:dashed;cursor:default;' : 'cursor:pointer;') });
     t.arms = [];
     for (var k = 0; k < 4; k++) {
-      var a = mk('div', { style: 'position:absolute;pointer-events:none;background:#5b6a9c;' + geom[k] });
+      var a = mk('div', { style: 'position:absolute;pointer-events:none;border:1px solid #c8e9ff52;background:#5b6a9c;' + geom[k] });
       b.appendChild(a); t.arms.push(a);
     }
     t.hub = mk('div', { style: 'position:absolute;left:34%;top:34%;width:32%;height:32%;' +
-      'border-radius:50%;background:#5b6a9c;pointer-events:none' });
+      'border-radius:50%;border:2px solid #c8e9ff77;background:#5b6a9c;pointer-events:none' });
     b.appendChild(t.hub);
     if (t.type === 's' || t.type === 'd') {
       b.appendChild(mk('span', { 'aria-hidden': 'true', style: 'position:absolute;left:0;right:0;' +
