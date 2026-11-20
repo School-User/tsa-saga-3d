@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#09121d">
+  <link rel="icon" href="data:,">
+  <link rel="stylesheet" href="./css/style.css">
+  <title>Drift Signal · The Long Quiet</title>
+</head>
+<body>
+  <main id="app" data-chapter="1">
+    <p id="save-warning" role="status" hidden>Saving is unavailable. Keep this tab open to keep your progress.</p>
+    <div id="screen"></div>
+    <section id="room-screen" aria-labelledby="room-title" hidden>
+      <header class="room-header">
+        <div class="brand"><span class="signal" aria-hidden="true"></span> Drift Signal</div>
+        <nav id="room-nav" aria-label="Navigator panels"></nav>
+      </header>
+      <div class="room-body">
+        <canvas id="world" aria-label="Walkable 3D view of the current room"
+          aria-describedby="walk-help"></canvas>
+        <p id="graphics-message" class="graphics-message" role="status" hidden></p>
+        <div class="room-name">
+          <p id="room-kicker" class="eyebrow"></p>
+          <h1 id="room-title" tabindex="-1"></h1>
+          <span id="room-tag" class="deck-chip"></span>
+        </div>
+        <aside class="mission">
+          <section class="side-panel" aria-labelledby="objectives-title">
+            <h2 id="objectives-title">Objectives</h2>
+            <ul id="goals"></ul>
+          </section>
+          <div id="rank-panel" class="side-panel"></div>
+        </aside>
+        <div class="room-bottom">
+          <section class="transcript" aria-label="Game Master">
+            <p class="eyebrow">Game Master</p>
+            <p id="room-intro"></p>
+          </section>
+          <div class="walk-ui">
+            <div id="prompt" class="walk-prompt" role="status"></div>
+            <p id="walk-help"><kbd>W A S D</kbd> or <kbd>↑ ← ↓ →</kbd> Move <span>·</span> <kbd>E</kbd> Interact<br>Click or tap an object to walk to it</p>
+          </div>
+        </div>
+      </div>
+      <footer class="room-footer">
+        <span id="room-class"></span>
+        <div id="stats"></div>
+        <span class="north"><span aria-hidden="true">↑</span> North</span>
+      </footer>
+    </section>
+    <dialog id="overlay" aria-labelledby="overlay-title"><div id="overlay-content"></div></dialog>
+  </main>
+  <noscript><p>Enable JavaScript to play Drift Signal.</p></noscript>
+  <script type="module" src="./js/main.js"></script>
+</body>
+</html>

@@ -1,0 +1,6 @@
+docs/codex-run*
+docs/run*-prompt.md
+docs/prev-2d-grade.md
+docs/HANDOFF.md
+*.done
+node_modules/
