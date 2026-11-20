@@ -6,6 +6,7 @@ window.Story[3] = {
   intro: 'Harbor Nine relays the Verdant’s distress call. You board the ark ship, which carries the last seeds of a lost world. Fern, the gardener AI, has left the vault display on for you.',
   image: 'assets/ch3/title.webp',
   imageAlt: 'The ark ship Verdant with a great glass dome full of green plants.',
+  nextStop: 'Return to the observation deck to see what the voyage left in its wake.',
   endings: [
     {
       flag: 'c3_ending_release',
@@ -60,7 +61,7 @@ window.Story[3] = {
             start: 'a',
             nodes: {
               a: { speaker: 'Fern', afterFlag: 'c3_vault_open', afterText: 'You freed the door. The cold drawers are holding temperature, and I can check the seeds one row at a time.', text: 'Navigator? The vault doors are frozen. The seeds are fine, I think. I count them every night, and the count keeps changing. I may be ill.', choices: [
-                { text: '“You sound tired, Fern. We can take this one drawer at a time.”', id: 'c3_fern_calm', unlock: 'The seed release check gains advantage.', check: { stat: 'emp', dc: 13, onPass: 'calm', onFail: 'uncertain' }, setFlag: 'c3_fern_calm', xp: 15 },
+                { text: '“You sound tired, Fern. We can take this one drawer at a time.”', id: 'c3_fern_calm', unlock: 'Fern will mark up the greenhouse rota. The seed release check gains advantage.', check: { stat: 'emp', dc: 13, onPass: 'calm', onFail: 'uncertain' }, setFlag: 'c3_fern_calm', xp: 15 },
                 { text: '“What exactly is frozen?”', afterFlag: 'c3_vault_open',
                   afterText: '“How are the drawers holding up?”', next: 'what' },
                 { text: '“Show me the door.”', next: 'what' }
@@ -92,7 +93,9 @@ window.Story[3] = {
       afterIntro: 'The grow lights are on, and each house has a name on the revised rota. Ana and Cy are still talking by the board.',
       narration: [
         { needAll: ['c3_crew_set', 'c3_crew_calm'], text: 'The revised rota is posted. Ana and Cy have their assignments, and the passage to the water room is clear.' },
-        { needFlag: 'c3_crew_calm', text: 'Ana and Cy make room at the board for you to finish the rota.' }
+        { needAll: ['c3_fern_calm', 'c3_crew_calm'], text: 'Ana and Cy make room at the rota. Fern has clipped Cy’s two corrections to the board.' },
+        { needFlag: 'c3_crew_calm', text: 'Ana and Cy make room at the board for you to finish the rota.' },
+        { needFlag: 'c3_fern_calm', text: 'Fern has clipped Cy’s two corrections to the rota board while Ana and Cy talk.' }
       ],
       goals: [
         { text: 'Fix the rota', needFlag: 'c3_crew_set' },

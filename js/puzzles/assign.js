@@ -33,8 +33,15 @@ export function start(el, ctx, done) {
   }
 
   var clueList = mk('ul', { 'class': 'small', 'aria-label': 'Clues' });
-  CLUES.forEach(function (clue) { clueList.appendChild(mk('li', {}, clue)); });
+  var markedUp = ctx?.hasFlag?.('c3_fern_calm');
+  (markedUp ? CLUES.slice(0, 2) : CLUES).forEach(function (clue) {
+    clueList.appendChild(mk('li', {}, clue));
+  });
   el.appendChild(clueList);
+  if (markedUp) {
+    el.appendChild(mk('p', { 'class': 'scene small' },
+      'Fern’s corrections · ' + CLUES.slice(2).join(' ')));
+  }
 
   var form = mk('div', { 'class': 'row', style: 'flex-direction:column;align-items:stretch' });
   PEOPLE.forEach(function (who, i) {
@@ -68,12 +75,12 @@ export function start(el, ctx, done) {
     'Skip puzzle (no XP)');
   skip.addEventListener('click', function () { finish('skip'); });
   var back = mk('button', { type: 'button', 'class': 'btn ghost small' }, 'Back');
-  back.addEventListener('click', function () { finish(false); });
+  back.addEventListener('click', function () { finish(solving); });
   el.appendChild(skip); el.appendChild(back);
 
   function lock() {
     PEOPLE.forEach(function (who) { selects[who].disabled = true; });
-    check.disabled = true; skip.disabled = true; back.disabled = true;
+    check.disabled = true; skip.disabled = true;
   }
 
   function verify() {

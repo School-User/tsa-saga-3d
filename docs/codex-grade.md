@@ -96,3 +96,19 @@ No verified blocker on a normal run. The original puzzles have separate bypass p
 | Storyline / Flow of the Game | 1 | 9 | 9 | Evidence opens a reply, completed repairs change dialogue, and each seed decision has a visible ending. |
 | Overall Appeal | 2 | 9 | 18 | More legible rooms, a direct first action and a 3D reunion with the ark give the voyage a stronger visual arc. |
 | **Estimated game subtotal** | | | **61 / 70** | Provisional pending the operator’s browser pass. |
+
+## Round 3 changes
+
+- Verified all 11 DeepSeek findings against the original code and recorded the evidence in [the independent review](deepseek-grade.md#verification).
+- The freight scale records three distinct equal-load comparisons and requires those readings to identify one crate. An inconclusive record or incorrect name calls for a clean reset. Pip and the manifest explain the load without identifying a crate. The power grid points to the fixed terminal, the decoder checks the shift on Transmit, and the beacon gives a phase band and relative signal feedback.
+- The pressure door leads into the Signal Laboratory. Reassuring ORI delivers the maintenance log when the player reaches Life Support. Reassuring Tamsin adds a cue at the ring controls, and reassuring Fern marks up the greenhouse rota. Companion chatter is available in the room transcript, and Verdant’s completion card points to the observation deck.
+- The diorama fills more of the view. Labels have more space around nearby props, a floor ring marks guided walks, and the docking lights, beacon and water support reduced motion. The first room gives directions for walking and interacting, and How to play explains controls, checks and rank points. The phone layout gives the canvas more height below the name, goals and Room objects.
+- Escape during a solve confirmation records the repair and returns to the room. Panel focus uses a fallback when the browser lacks `checkVisibility()`. Node tests and JavaScript syntax checks pass. The browser test now completes the power grid and freight balance through their own controls and retains the test hook for the other seven. The operator’s Chromium run and visual review are pending.
+
+| Criterion | × | Estimated score /10 | Points | Reason |
+| --- | ---: | ---: | ---: | --- |
+| Creativity and Artisanship | 2 | 9 | 18 | Equipment and evidence give the puzzles a place in the setting while preserving player deduction. |
+| Technical Skill | 2 | 9 | 18 | The scale validates the measurement record, and the browser script covers both early dismissal and normal solve completion. |
+| Storyline / Flow of the Game | 1 | 9 | 9 | Dialogue checks change what players find at the consoles and carry into later rooms. |
+| Overall Appeal | 2 | 9 | 18 | Tighter framing, clearer movement feedback and phone onboarding support the nine-room voyage. |
+| **Estimated game subtotal** | | | **63 / 70** | Provisional pending the operator’s Chromium pass. |

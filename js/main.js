@@ -109,7 +109,8 @@ function render() {
     canvas.setAttribute('aria-label', 'Walkable 3D view of the current room');
     canvas.setAttribute('aria-describedby', 'walk-help');
     world?.setRoom(room);
-    showRoomHud(room, run);
+    showRoomHud(room, run, !!world);
+    if (state.applyRoomAid(run, room)) persist();
     refresh();
     if (run.activeDialogue && byId(run.activeDialogue)?.dialogue) displayDialogue(byId(run.activeDialogue));
   }
@@ -230,6 +231,8 @@ function startPuzzle(hotspot) {
   function back() {
     [...get('overlay-content').querySelectorAll('button')]
       .find(control => control.textContent === 'Back')?.click();
+    // A confirmed repair may synchronously replace the puzzle with its result message.
+    if (modal.kind === 'message') modal.close();
   }
   modal.open('puzzle', null, content => {
     const consolePanel = el('section', `puzzle-console puzzle-${hotspot.puzzle}`);
@@ -256,7 +259,7 @@ function finishPuzzle(hotspot, bypass) {
   message(hotspot.label, text);
 }
 
-initializeHud(panel, guide);
+initializeHud(panel);
 document.addEventListener('keydown', event => {
   if (event.key === 'Escape' && room && !modal.kind && !event.repeat) {
     event.preventDefault();
@@ -271,6 +274,7 @@ function graphicsUnavailable() {
   const fallback = canvas.parentElement?.querySelector('.finale-art img');
   if (fallback) fallback.hidden = false;
   get('walk-help').hidden = true;
+  get('first-steps').textContent = 'Use Room objects to open the cryo console.';
   setPrompt(null);
   const message = get('graphics-message');
   message.hidden = false;
@@ -306,7 +310,7 @@ if (test) {
       const back = [...get('overlay-content').querySelectorAll('button')].find(control => control.textContent === 'Back');
       if (back.disabled) return false;
       back.click();
-      finishPuzzle(hotspot, false);
+      if (!run.flags[hotspot.setFlag]) finishPuzzle(hotspot, false);
       return true;
     },
     forceRoll(number) {

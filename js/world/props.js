@@ -8,6 +8,14 @@ const green = 0x97f3ad;
 const glass = 0x5f96ad;
 const brass = 0xd2a160;
 
+const labelOffsets = {
+  c2_pip: { x: -.35, y: .25 },
+  c3_door1: { x: -.4, y: .24 },
+  c3_p_lights: { x: .44, y: -.07 },
+  c3_look2: { x: -.23, y: .15 },
+  c3_p_assign: { x: .36, y: -.08 }
+};
+
 function screen(group, width, height, x, y, z, colors) {
   box(group, width, height, .13, steel, x, y, z);
   box(group, width * .87, height * .72, .15, colors.dark, x, y, z + .025);
@@ -198,6 +206,13 @@ export function buildProp(parent, prop, c) {
       group.add(figure);
       person(figure, coat, false);
     }
+  } else if (type === 'labBench') {
+    box(group, w, .12, d, steel, 0, .94);
+    for (const x of [-.89, .89]) box(group, .12, .89, .73, c.hull, x, .445);
+    box(group, .9, .06, .56, c.dark, -.4, 1.02);
+    for (const x of [-.64, -.4, -.16]) tube(group, .068, .083, .27, glass, x, 1.19, 0, 8);
+    box(group, .5, .29, .48, c.hull, .55, 1.11);
+    box(group, .24, .042, .026, c.bright, .55, 1.16, .25, true);
   } else if (type === 'cabinet') {
     box(group, w, 1.61, d, white, 0, .83);
     for (const y of [.42, .83, 1.24]) {
@@ -227,6 +242,13 @@ export function buildProp(parent, prop, c) {
   } else {
     status.lights = station(group, type, c);
   }
+  if (prop.hotspot === 'c2_p_memory') {
+    status.aid = box(group, .27, .065, .27, green, 0, 1.14, .26, true);
+    status.aidFlag = 'c2_tamsin_calm';
+  } else if (prop.hotspot === 'c3_p_assign') {
+    status.aid = lettering(group, 'FERN’S NOTES', 1.2, .42, { scale: .52, x: .28, badge: true });
+    status.aidFlag = 'c3_fern_calm';
+  }
   if (prop.character) {
     const figure = buildCharacter(group, prop.character);
     figure.position.set(0, 1.18, -.13);
@@ -238,11 +260,14 @@ export function buildProp(parent, prop, c) {
   if (prop.hotspot === 'c1_listen') {
     lettering(group, 'D → W', 1.36, .34, { scale: .55 });
   }
-  const badgeZ = type === 'door' || type === 'vault' ? .47 : .053;
-  if (prop.name) lettering(group, prop.name, h + (prop.character ? 1.16 : .17), badgeZ, { badge: !!prop.hotspot });
+  const badgeZ = type === 'door' || type === 'vault' ? .67 : .18;
+  const offset = labelOffsets[prop.hotspot];
+  const badgeX = offset?.x ?? 0;
+  const badgeY = h + (prop.character ? 1.16 : .17) + (offset?.y ?? 0);
+  if (prop.name) lettering(group, prop.name, badgeY, badgeZ, { badge: !!prop.hotspot, x: badgeX });
   if (prop.hotspot) {
     group.userData.hotspot = prop.hotspot;
-    const marker = mesh(group, new T.OctahedronGeometry(.11), c.accent, 0, h + (prop.character ? 1.49 : .48), badgeZ, { glow: true });
+    const marker = mesh(group, new T.OctahedronGeometry(.11), c.accent, badgeX, badgeY + .34, badgeZ, { glow: true });
     status.marker = marker;
   }
   return { group, ...status };
@@ -259,6 +284,7 @@ export function updateProp(prop, visual, run, status, colors) {
     if (prop.type === 'locks') light.visible = !ready;
     if (prop.type === 'gauges' && prop.flag === 'c1_air_ok' && ready) light.rotation.z = .28;
   }
+  if (visual.aid) visual.aid.visible = !!run.flags[visual.aidFlag];
   if (visual.figure) visual.figure.visible = status !== 'Locked';
   visual.panels?.forEach((panel, i) => { panel.position.x = (i ? 1 : -1) * (ready ? .95 : .43); });
   if (visual.inset) visual.inset.visible = !ready;

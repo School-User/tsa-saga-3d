@@ -65,7 +65,7 @@ export function start(el, ctx, done) {
     'Skip puzzle (no XP)');
   skip.addEventListener('click', function () { finish('skip'); });
   var back = mk('button', { type: 'button', 'class': 'btn ghost small' }, 'Back');
-  back.addEventListener('click', function () { finish(false); });
+  back.addEventListener('click', function () { finish(solving); });
   el.appendChild(skip); el.appendChild(back);
 
   function gap() { return board.indexOf(0); }
@@ -134,7 +134,7 @@ export function start(el, ctx, done) {
     solving = true;
     live.textContent = 'The sections lock into order. Water flows to the dome.';
     buttons.forEach(function (b) { b.disabled = true; });
-    reset.disabled = true; skip.disabled = true; back.disabled = true;
+    reset.disabled = true; skip.disabled = true;
     timer = setTimeout(function () { finish(true); }, 1000);
   }
 

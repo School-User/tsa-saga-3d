@@ -60,7 +60,7 @@ window.Story[1] = {
             start: 'a',
             nodes: {
               a: { speaker: 'ORI', text: '...Navigator? Systems... fragmented. I cannot tell which memories are mine. Please, do not switch me off.', choices: [
-                { text: '“You are safe. I am staying right here.”', id: 'c1_ori_calm', unlock: 'ORI’s reassurance check at the lab gains advantage.', check: { stat: 'emp', dc: 13, onPass: 'calm', onFail: 'uncertain' }, setFlag: 'c1_ori_calm', xp: 15 },
+                { text: '“You are safe. I am staying right here.”', id: 'c1_ori_calm', unlock: 'ORI will send you the maintenance log and give you advantage when you reassure it at the lab.', check: { stat: 'emp', dc: 13, onPass: 'calm', onFail: 'uncertain' }, setFlag: 'c1_ori_calm', xp: 15 },
                 { text: '“What happened to the ship?”', next: 'what' },
                 { text: '“Nobody is switching anything off.”', next: 'what' }
               ] },
@@ -91,11 +91,13 @@ window.Story[1] = {
     {
       id: 2,
       title: 'Life Support',
+      entryAid: { needFlag: 'c1_ori_calm', item: 'maintenance_log' },
       intro: 'Four valve wheels feed the ring that keeps the ship breathing. Above them a red needle inches downward. Beyond them, the laboratory door is sealed, and ORI’s text waits on a separate terminal.',
       afterIntro: 'The gauge needles settle and the valve bank lights hold steady. ORI still controls the lab lock.',
       narration: [
         { needAll: ['c1_air_ok', 'c1_lab_open'], text: 'The pressure holds. ORI releases the lock, and the lab door opens.' },
-        { needFlag: 'c1_lab_open', text: 'ORI has cleared the lab. The pressure interlock still needs the valve bank.' }
+        { needFlag: 'c1_lab_open', text: 'ORI has cleared the lab. The pressure interlock still needs the valve bank.' },
+        { needFlag: 'c1_ori_calm', text: 'ORI sends the archived maintenance log to your Inventory. You can show it at the lab terminal. The red pressure needle is still falling.' }
       ],
       goals: [
         { text: 'Restore air pressure', needFlag: 'c1_air_ok' },
@@ -160,8 +162,8 @@ window.Story[1] = {
     },
     {
       id: 3,
-      title: 'The Signal',
-      intro: 'You step into a glass dome facing the dying star. A pulse crosses the main screen in three bright marks and a gap. The same set of scrambled letters appears beside it every time.',
+      title: 'Signal Laboratory',
+      intro: 'You step through the pressure door into Meridian’s signal laboratory. Sample trays line the entry bench. Ahead, the lab’s glass dome faces the dying star, and the pulse monitor repeats three bright marks and a gap.',
       afterIntro: 'The decoder holds the words WE ARE NOT ALONE. The reply terminal can carry your answer across the gap.',
       goals: [
         { text: 'Decode the message', needFlag: 'c1_decoded' },
@@ -172,8 +174,8 @@ window.Story[1] = {
         { companion: 'ori', needFlag: 'c1_ending_peace', text: 'I made room on the display for a second cursor.' }
       ],
       hotspots: [
-        { id: 'c1_listen', label: 'Watch the signal repeat', xp: 5,
-          text: 'Three pulses, a gap, three pulses. You count out the next group, and the third mark appears exactly when you expect it. The deck’s calibration plate matches incoming D with W on Meridian’s alphabet.' },
+        { id: 'c1_listen', label: 'Read the lab pulse monitor', xp: 5,
+          text: 'Three pulses, a gap, three pulses. You count out the next group, and the third mark appears exactly when you expect it. The lab’s calibration plate matches incoming D with W on Meridian’s alphabet.' },
         { id: 'c1_p_cipher', label: 'Decode the message', puzzle: 'cipher', console: 'Veil reply encoder', setFlag: 'c1_decoded', xp: 30,
           text: 'The scrambled letters fall into place. The message reads: WE ARE NOT ALONE.',
           bypassText: 'You let the relay compare the shifts one at a time. When it finishes, the screen reads WE ARE NOT ALONE.' },

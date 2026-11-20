@@ -63,7 +63,28 @@ async function play({ send, evaluate }) {
   await click('Confirm background');
   await click('Begin chapter');
 
-  // Exercise the keyboard-only route and an actual puzzle control before using the debug solve.
+  assert.match(await evaluate('document.querySelector("#first-steps").textContent'), /Press E/);
+  assert.match(await evaluate('document.querySelector("#scene-lines").textContent'), /chronometer/);
+  await checkPhoneLayout();
+
+  const visibilityDescriptor = await evaluate('Boolean(Object.getOwnPropertyDescriptor(Element.prototype, "checkVisibility"))');
+  assert.equal(visibilityDescriptor, true);
+  await evaluate('document.querySelector("[data-panel=help]").focus()');
+  await key('Enter');
+  assert.match(await evaluate('document.querySelector("#overlay-content").textContent'), /d20.*Spend points/);
+  await evaluate(`window.visibilityDescriptor = Object.getOwnPropertyDescriptor(Element.prototype, 'checkVisibility');
+    delete Element.prototype.checkVisibility; true`);
+  try {
+    await key('Tab');
+    assert.equal(await evaluate('document.activeElement.textContent'), 'Back');
+    await key('Escape');
+    assert.equal(await evaluate('document.activeElement.textContent'), 'How to play');
+  } finally {
+    await evaluate(`Object.defineProperty(Element.prototype, 'checkVisibility', window.visibilityDescriptor);
+      delete window.visibilityDescriptor`);
+  }
+
+  // Reach the workspace by keyboard and verify the rotation threshold on a practice attempt.
   await evaluate(`document.querySelector('#room-nav button').focus()`);
   for (let i = 0; i < 3; i++) await key('Tab');
   assert.equal(await evaluate('document.activeElement.textContent'), 'Room objects');
@@ -141,33 +162,62 @@ async function play({ send, evaluate }) {
       await choose('c1_lab_patient');
       await choose('done');
     }
-    await interact(puzzle.id);
-    assert.equal(await evaluate('document.querySelector("#overlay").dataset.kind'), 'puzzle');
-    assert.equal(await evaluate('window.__game.solvePuzzle()'), true);
-    assert.equal((await current()).flags[puzzle.setFlag], true);
-    await back();
-
-    if (room === 3) {
-      await interact(gated.id);
-      await roll('c1_veil_sci', 20, 'normal', 19, true);
-      assert.match(await evaluate('document.querySelector(".unlock-note").textContent'), /phase clue/);
-      await choose('continue');
-      await choose('c1_talk.study.0');
-      await choose('c1_talk.fin.0');
-    }
     if (room === 4) {
       await interact('c2_radio1');
       await roll('c2_tamsin_calm', 20, 'normal', 19, true);
       await choose('continue');
       await choose('c2_radio1.calm.0');
       await choose('done');
+      assert.match(await evaluate('document.querySelector("#room-intro").textContent'), /cue from the Reed/);
     }
     if (room === 5) {
       await interact('c2_pip');
       await choose('c2_pip.a.3');
       await choose('c2_pip_count');
       await choose('c2_pip.win.0');
+      assert.doesNotMatch(await evaluate('document.querySelector("#overlay .dialogue-line").textContent'), /seven|7/i);
       await choose('done');
+    }
+
+    if (room === 7) {
+      await interact('c3_fern1');
+      await roll('c3_fern_calm', 20, 'normal', 19, true);
+      await choose('continue');
+      await choose('c3_fern1.calm.0');
+      await choose('done');
+    }
+
+    await interact(puzzle.id);
+    assert.equal(await evaluate('document.querySelector("#overlay").dataset.kind'), 'puzzle');
+    if (room === 1) {
+      await solvePower();
+    } else if (room === 5) {
+      await solveBalance();
+      await back();
+    } else {
+      if (room === 4) {
+        assert.match(await evaluate('document.querySelector("#overlay-content").textContent'), /First cue: Pad 3/);
+      }
+      if (room === 8) {
+        assert.match(await evaluate('document.querySelector("#room-intro").textContent'), /Cy’s two corrections/);
+        assert.match(await evaluate('document.querySelector("#overlay-content").textContent'), /Fern’s corrections/);
+      }
+      assert.equal(await evaluate('window.__game.solvePuzzle()'), true);
+      await back();
+    }
+    const record = await current();
+    assert.equal(record.flags[puzzle.setFlag], true);
+    assert.equal(record.journal[puzzle.id].bypass, false);
+    assert.equal(record.awards[puzzle.id], 30);
+
+    if (room === 3) {
+      assert.equal(await evaluate('document.querySelector("#room-title").textContent'), 'Signal Laboratory');
+      await interact(gated.id);
+      await roll('c1_veil_sci', 20, 'normal', 19, true);
+      assert.match(await evaluate('document.querySelector(".unlock-note").textContent'), /phase clue/);
+      await choose('continue');
+      await choose('c1_talk.study.0');
+      await choose('c1_talk.fin.0');
     }
     if (room === 6) {
       await interact(gated.id);
@@ -184,7 +234,7 @@ async function play({ send, evaluate }) {
     }
     if (room === 9) {
       await interact(gated.id);
-      await roll('c3_fern_release', 1, 'normal', 0, false);
+      await roll('c3_fern_release', 1, 'advantage', 0, false);
       await choose('continue');
       await choose('c3_talk3.pause.0');
       await choose('c3_talk3.replant.0');
@@ -195,6 +245,9 @@ async function play({ send, evaluate }) {
     await interact(exit.id);
     if (room % 3 === 0) {
       assert.equal((await current()).screen, 'complete');
+      if (room === 9) {
+        assert.match(await evaluate('document.querySelector(".route-copy").textContent'), /observation deck/);
+      }
       await click('Continue');
       if (room < 9) await click('Begin chapter');
     }
@@ -203,7 +256,7 @@ async function play({ send, evaluate }) {
 
   const finale = await current();
   assert.equal(finale.screen, 'finale');
-  assert.equal(finale.xp, 415);
+  assert.equal(finale.xp, 430);
   assert.equal(Object.keys(finale.journal).length, 20);
   assert.equal(await evaluate('document.querySelector("h1").textContent'), 'The Long Quiet');
   assert.equal(await evaluate('document.querySelectorAll(".epilogue p").length'), 3);
@@ -217,6 +270,66 @@ async function play({ send, evaluate }) {
   assert.equal(await evaluate('Object.hasOwn(window, "__game")'), false);
   await click('Continue');
   assert.match(await evaluate('document.querySelector(".journal-coverage").textContent'), /20 of 20/);
+
+  async function solvePower() {
+    assert.equal(await evaluate(`(() => {
+      const tiles = document.querySelectorAll(".conduit-tile");
+      for (const [index, turns] of [[11, 3], [6, 2], [7, 1], [8, 1], [13, 2]]) {
+        for (let turn = 0; turn < turns; turn++) tiles[index].click();
+      }
+      return document.querySelector("#overlay-content").textContent.includes("Power reaches the door.")
+        && !window.__game.state.flags.c1_power_on;
+    })()`), true, 'Power is solved and its confirmation is still in progress');
+    await key('Escape');
+    await until(() => evaluate('!document.querySelector("#overlay").open'));
+    assert.equal((await current()).flags.c1_power_on, true);
+  }
+
+  async function solveBalance() {
+    const modal = '#overlay button';
+    const naming = () => evaluate(`[...document.querySelectorAll('#overlay button')].find(
+      button => button.textContent === 'Name the heavy crate').checkVisibility()`);
+    async function weigh(left, right) {
+      await evaluate(`[...document.querySelectorAll('.crate-rack button')].forEach((crate, index) => {
+        const id = index + 1;
+        const current = crate.textContent.endsWith(' L') ? 1 : crate.textContent.endsWith(' R') ? 2 : 0;
+        const target = ${JSON.stringify(left)}.includes(id) ? 1 : ${JSON.stringify(right)}.includes(id) ? 2 : 0;
+        for (let turns = (target - current + 3) % 3; turns > 0; turns--) crate.click();
+      })`);
+      await click('Weigh', modal);
+    }
+    await weigh([1, 2], [3, 4]);
+    assert.equal(await naming(), false);
+    await weigh([5], [6]);
+    assert.equal(await naming(), false);
+    await weigh([7], [8]);
+    assert.equal(await naming(), true);
+    await click('Name the heavy crate', modal);
+    await click('7', '#overlay button[aria-label="Crate 7"]');
+    await click('Confirm', modal);
+    await until(() => evaluate('document.querySelector("#overlay").dataset.kind === "message"'));
+    assert.match(await evaluate('document.querySelector("#overlay .dialogue-line").textContent'), /heavy crate rolls/);
+  }
+
+  async function checkPhoneLayout() {
+    await send('Emulation.setDeviceMetricsOverride', { width: 390, height: 844, deviceScaleFactor: 1, mobile: true });
+    await send('Emulation.setTouchEmulationEnabled', { enabled: true });
+    try {
+      assert.equal(await evaluate(`(() => {
+        const bounds = selector => document.querySelector(selector).getBoundingClientRect();
+        const canvas = bounds('#world');
+        return document.documentElement.scrollWidth <= 390
+          && canvas.height > 350
+          && bounds('#room-title').bottom <= canvas.top
+          && bounds('#goals').bottom <= canvas.top
+          && bounds('[data-panel=objects]').bottom <= canvas.top;
+      })()`), true, 'Phone viewport fits the HUD and keeps objectives and Room objects above the canvas');
+    } finally {
+      await send('Emulation.clearDeviceMetricsOverride');
+      await send('Emulation.setTouchEmulationEnabled', { enabled: false });
+    }
+  }
+
 }
 
 async function verifyCanvas(evaluate) {

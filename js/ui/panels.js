@@ -8,7 +8,7 @@ import { button, el, section, list } from './dom.js';
 
 const panelTitles = {
   journal: 'Journal', inventory: 'Inventory', party: 'Party', objects: 'Room objects',
-  pause: 'Paused', training: 'Spend rank points'
+  help: 'How to play', pause: 'Paused', training: 'Spend rank points'
 };
 
 export function openPanel(id, ctx) {
@@ -17,6 +17,7 @@ export function openPanel(id, ctx) {
     if (id === 'journal') journal(content, run);
     if (id === 'inventory') inventory(content, run);
     if (id === 'party') party(content, room, run);
+    if (id === 'help') help(content);
     if (id === 'objects') objects(content, room, run, ctx);
     if (id === 'pause') {
       if (!ctx.saved) content.append(el('p', '', 'Progress is available for this session. Keep this tab open to continue.'));
@@ -25,6 +26,13 @@ export function openPanel(id, ctx) {
     if (id === 'training') training(content, run, ctx);
     content.append(button(id === 'pause' ? 'Resume' : 'Back', close, 'btn primary'));
   }, close);
+}
+
+function help(content) {
+  section(content, 'Explore', 'Walk with WASD or the arrow keys. When an object is within reach, press E. Click or tap a prop to approach and interact, or open Room objects to choose from a list.');
+  section(content, 'Use panels and consoles', 'Tab or Shift+Tab moves between controls. Enter or Space activates the focused control. Use arrow keys inside puzzle grids and sliders. Escape closes a panel or opens Pause while exploring.');
+  section(content, 'Make a check', 'Roll a d20 and add your stat modifier (score minus 3) and any companion bonus. Meet or exceed the difficulty class (DC) to pass. Advantage keeps the higher of two dice and disadvantage keeps the lower. A failed check still leaves another way forward.');
+  section(content, 'Gain ranks and use evidence', 'Inspections and repairs earn XP. When you gain a rank, use Spend points by the rank meter to raise a stat. The Journal records clues and repairs. Inventory holds evidence you can use in dialogue.');
 }
 
 function journal(content, run) {

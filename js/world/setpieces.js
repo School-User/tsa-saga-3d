@@ -50,7 +50,7 @@ function dockingRing(group, c) {
     lights.push(lamp);
   }
   for (const x of [-5, 5]) beam(group, [x, 0, -4.7], [x * .43, 2.1, -7.5], .26, c.hull);
-  return { statusLights: lights, flag: 'c2_ring_lit' };
+  return { statusLights: lights, flag: 'c2_ring_lit', cadence: 'chase' };
 }
 
 function cargo(group, c) {
@@ -68,7 +68,7 @@ function beacon(group, c) {
   }
   const lens = mesh(group, new T.OctahedronGeometry(.63), c.hull, 0, 3.91, -7.35, { glow: true });
   beam(group, [0, 4.25, -7.35], [0, 5.11, -7.35], .07, steel);
-  return { statusLights: [lens], flag: 'c2_beacon_tuned' };
+  return { statusLights: [lens], flag: 'c2_beacon_tuned', cadence: 'pulse' };
 }
 
 function seedVault(group, c) {
@@ -114,12 +114,23 @@ export function buildSetpiece(group, id, colors) {
 
 export function updateSetpiece(piece, flags, colors) {
   const ready = !!flags[piece.flag];
+  piece.ready = ready;
+  piece.bright = colors.bright;
   for (const light of piece.statusLights ?? []) light.material.color.set(ready ? colors.bright : colors.hull);
   if (piece.stream) piece.stream.visible = ready;
   piece.ripples?.forEach(ripple => { ripple.visible = ready; });
 }
 
 export function animateSetpiece(piece, now, reduced) {
+  if (piece.ready && piece.cadence) {
+    const step = Math.floor(now / 155) % piece.statusLights.length;
+    piece.statusLights.forEach((light, i) => {
+      const distance = (step - i + piece.statusLights.length) % piece.statusLights.length;
+      const intensity = piece.cadence === 'pulse' ? .73 + .27 * Math.cos(now / 440)
+        : Math.max(.36, 1 - distance * .25);
+      light.material.color.set(piece.bright).multiplyScalar(reduced ? 1 : intensity);
+    });
+  }
   piece.ripples?.forEach((ripple, i) => {
     const travel = reduced ? 0 : now / 1380;
     ripple.position.z = -4.65 + ((i * 1.13 + travel) % 8.8);

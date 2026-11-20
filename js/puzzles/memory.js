@@ -80,6 +80,12 @@ export function start(el, ctx, done) {
   entryLine.appendChild(dots);
   el.appendChild(entryLine);
 
+  if (ctx?.hasFlag?.('c2_tamsin_calm')) {
+    var first = PADS[SECRET[0] - 1];
+    el.appendChild(mk('p', { 'class': 'scene small' },
+      'Reed transmission · First cue: Pad ' + first.n + ', ' + first.shapeName + '.'));
+  }
+
   var live = mk('p', { 'class': 'small', role: 'status', 'aria-live': 'polite' });
   el.appendChild(live);
 
@@ -92,7 +98,7 @@ export function start(el, ctx, done) {
     'Skip puzzle (no XP)');
   skip.addEventListener('click', function () { finish('skip'); });
   var back = mk('button', { type: 'button', 'class': 'btn ghost small' }, 'Back');
-  back.addEventListener('click', function () { finish('back'); });
+  back.addEventListener('click', function () { finish(solving ? 'solved' : 'back'); });
   var controls = mk('div', { 'class': 'puzzle-controls' });
   controls.append(watch, steps, skip, back);
   el.appendChild(controls);
@@ -201,7 +207,6 @@ export function start(el, ctx, done) {
       steps.disabled = true;
       setPadsEnabled(false);
       skip.disabled = true;
-      back.disabled = true;
       live.textContent = 'Sequence accepted. The docking ring answers with a steady glow.';
       later(function () { finish('solved'); }, 1000);
     }

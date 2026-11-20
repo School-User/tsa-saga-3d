@@ -1,5 +1,5 @@
 // Cargo bay balance: nine identical crates, one heavier. Weigh at most three times.
-// Any pan may hold any number of crates; an empty pan is refused rather than weighed.
+// Equal loads let each result rule out crates. Keep a visible record for deduction.
 var HEAVY = 7;
 var MAX_WEIGHS = 3;
 var FAIL_AT = 3;
@@ -15,16 +15,17 @@ export function start(el, ctx, done) {
   var sci = !!(ctx && typeof ctx.stat === 'function' && ctx.stat('sci') >= 4);
   var crates = [];
   var weighings = 0, failures = 0, chosen = 0;
-  var phase = 'weigh';            // 'weigh' -> 'locked' -> 'name' -> solved
+  var phase = 'weigh';
+  var candidates = [], used = new Set();
+  var history = mk('ol', { 'class': 'small', 'aria-label': 'Weighing record' });
   var stopped = false, solving = false;
   var timers = [];
 
   el.appendChild(mk('h2', {}, 'Freight balance'));
   el.appendChild(mk('p', { 'class': 'small' },
     'Nine crates look identical and one of them is heavier. Put crates on the left and ' +
-    'right pans and weigh. You get ' + MAX_WEIGHS + ' weighings, then you must name the ' +
-    'heavy crate. Press a crate to move it: off, left pan, right pan. Any number of crates ' +
-    'per pan is allowed, but both pans need at least one.'));
+    'right pans in equal numbers. Three different weighings must leave only one crate possible ' +
+    'before you can name it. Press a crate to move it: off, left pan, right pan.'));
   if (sci) {
     el.appendChild(mk('p', { 'class': 'small' }, 'Hint: Try three against three first.'));
   }
@@ -54,18 +55,22 @@ export function start(el, ctx, done) {
   weighRow.appendChild(weighBtn);
   weighRow.appendChild(countLine);
   el.appendChild(weighRow);
+  el.appendChild(history);
 
   var nameRow = mk('div', { 'class': 'row' });
   var nameBtn = mk('button', { type: 'button', 'class': 'btn', hidden: '' },
     'Name the heavy crate');
   nameBtn.addEventListener('click', beginNaming);
   nameRow.appendChild(nameBtn);
+  var retry = mk('button', { type: 'button', 'class': 'btn ghost', hidden: '' }, 'Reset balance');
+  retry.addEventListener('click', reset);
+  nameRow.appendChild(retry);
   el.appendChild(nameRow);
 
   var live = mk('p', { 'class': 'small', role: 'status', 'aria-live': 'polite' });
   el.appendChild(live);
 
-  // Naming phase: shown once all three weighings are spent.
+  // Keep the record visible while the player names a crate.
   var naming = mk('div', { style: 'display:none' });
   naming.appendChild(mk('p', { 'class': 'small' }, 'Name the heavy crate:'));
   var pickBox = mk('div', { role: 'group', 'aria-label': 'Name the heavy crate',
@@ -90,7 +95,7 @@ export function start(el, ctx, done) {
     'Skip puzzle (no XP)');
   skip.addEventListener('click', function () { finish('skip'); });
   var back = mk('button', { type: 'button', 'class': 'btn ghost small' }, 'Back');
-  back.addEventListener('click', function () { finish('back'); });
+  back.addEventListener('click', function () { finish(solving ? 'solved' : 'back'); });
   el.appendChild(skip); el.appendChild(back);
 
   function later(fn, ms) {
@@ -114,7 +119,8 @@ export function start(el, ctx, done) {
       '  ·  Right pan: ' + (right.length ? right.join(', ') : 'empty');
     countLine.textContent = 'Weighings: ' + weighings + ' of ' + MAX_WEIGHS;
     weighBtn.disabled = phase !== 'weigh';
-    nameBtn.hidden = !(phase === 'locked' || (phase === 'weigh' && weighings >= 1));
+    nameBtn.hidden = phase !== 'locked';
+    retry.hidden = phase !== 'retry';
     naming.style.display = phase === 'name' || phase === 'done' ? 'block' : 'none';
   }
 
@@ -131,31 +137,43 @@ export function start(el, ctx, done) {
       if (c.pan === 1) left.push(c.n);
       if (c.pan === 2) right.push(c.n);
     });
-    if (!left.length || !right.length) {
-      live.textContent = 'Place at least one crate on each pan before weighing. ' +
-        'Nothing was counted.';
+    if (!left.length || left.length !== right.length) {
+      live.textContent = 'Put the same number of crates on each pan. Nothing was counted.';
       return;
     }
+    var key = [left.join(','), right.join(',')].sort().join('|');
+    if (used.has(key)) {
+      live.textContent = 'Those groups have already been compared. Nothing was counted.';
+      return;
+    }
+    used.add(key);
     weighings += 1;
-    // A normal crate weighs two units and the heavy crate weighs three.
-    var leftWeight = 2 * left.length + (left.indexOf(HEAVY) !== -1 ? 1 : 0);
-    var rightWeight = 2 * right.length + (right.indexOf(HEAVY) !== -1 ? 1 : 0);
-    var result = leftWeight > rightWeight ? 'the left pan sinks. It is heavier.'
-      : rightWeight > leftWeight ? 'the right pan sinks. It is heavier.'
-      : 'the pans balance.';
-    live.textContent = 'Weighing ' + weighings + ' of ' + MAX_WEIGHS + ': ' + result;
-    if (weighings >= MAX_WEIGHS) {
-      phase = 'locked';
-      live.textContent += ' The balance locks. Press "Name the heavy crate" when you are ready.';
+    function tilt(crate) {
+      return Number(left.includes(crate)) - Number(right.includes(crate));
+    }
+    var reading = tilt(HEAVY);
+    candidates = candidates.filter(function (crate) { return tilt(crate) === reading; });
+    var result = reading > 0 ? 'the left pan sinks.'
+      : reading < 0 ? 'the right pan sinks.' : 'the pans balance.';
+    history.appendChild(mk('li', {}, left.join(', ') + ' vs ' + right.join(', ') + ': ' + result));
+    live.textContent = 'Weighing ' + weighings + ': ' + result;
+    if (weighings === MAX_WEIGHS) {
+      if (candidates.length === 1) {
+        phase = 'locked';
+        live.textContent += ' Check your record and name the heavy crate.';
+      } else fail('The record still fits multiple crates.');
     }
     paint();
+    if (phase === 'locked') nameBtn.focus();
+    if (phase === 'retry') retry.focus();
   }
 
   function beginNaming() {
-    if (stopped || solving || !(phase === 'locked' || (phase === 'weigh' && weighings >= 1))) return;
+    if (stopped || solving || phase !== 'locked') return;
     phase = 'name';
     paint();
     live.textContent = 'Pick the crate you think is heavy, then Confirm.';
+    picks[0].focus();
   }
 
   function pick(num) {
@@ -172,31 +190,44 @@ export function start(el, ctx, done) {
       live.textContent = 'Choose one crate to name first.';
       return;
     }
-    if (chosen === HEAVY) {
+    if (chosen === candidates[0]) {
       solving = true;
       phase = 'done';
       paint();
       confirm.disabled = true;
       picks.forEach(function (p) { p.disabled = true; });
       skip.disabled = true;
-      back.disabled = true;
       live.textContent = 'Crate ' + chosen + ' is the heavy one. The load balances at last.';
       later(function () { finish('solved'); }, 1000);
       return;
     }
-    var guess = chosen;
-    failures += 1;
-    chosen = 0;
-    weighings = 0;
-    phase = 'weigh';
-    picks.forEach(function (p) { p.setAttribute('aria-pressed', 'false'); });
+    fail('That crate does not fit your record.');
     paint();
-    live.textContent = 'Crate ' + guess + ' was not the heavy one — the balance resets. ' +
-      '(' + failures + ' of ' + FAIL_AT + ' failed attempts.)';
+    retry.focus();
+  }
+
+  function fail(text) {
+    phase = 'retry';
+    failures += 1;
+    live.textContent = text + ' Reset the balance to make a new record.';
     if (failures >= FAIL_AT) {
       skip.hidden = false;
       live.textContent += ' A bypass has unlocked.';
     }
+  }
+
+  function reset() {
+    if (phase !== 'retry') return;
+    chosen = 0;
+    weighings = 0;
+    phase = 'weigh';
+    candidates = crates.map(function (crate) { crate.pan = 0; return crate.n; });
+    used.clear();
+    history.textContent = '';
+    picks.forEach(function (p) { p.setAttribute('aria-pressed', 'false'); });
+    live.textContent = 'The pans are clear.';
+    paint();
+    crates[0].btn.focus();
   }
 
   function finish(kind) {
@@ -214,5 +245,6 @@ export function start(el, ctx, done) {
     done(kind === 'skip' ? { solved: false, skipped: true } : { solved: kind === 'solved' });
   }
 
+  candidates = crates.map(function (crate) { return crate.n; });
   paint();
 }

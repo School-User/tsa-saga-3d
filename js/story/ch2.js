@@ -38,7 +38,7 @@ window.Story[2] = {
     ]
   },
   items: [
-    { id: 'cargo_manifest', name: 'Cargo manifest', text: 'Pip’s cargo list, including a pencilled question mark beside crate seven.', needFlag: 'c2_manifest' },
+    { id: 'cargo_manifest', name: 'Cargo manifest', text: 'Pip’s cargo list confirms that all nine seals are intact. One crate was loaded with an extra counterweight, but the weight column is blank.', needFlag: 'c2_manifest' },
     { id: 'verdant_relay', name: 'Verdant’s relay message', text: 'A distress message from the ark ship Verdant, with the coordinates of its seed vault entrance.', needFlag: 'c2_contacted' }
   ],
   levels: [
@@ -47,6 +47,10 @@ window.Story[2] = {
       title: 'Docking Ring',
       intro: 'The docking ring is dark. On the control desk, four coloured pads carry four different shapes. A line of text breaks up on the radio display. Outside the glass, the Reed turns slowly in the nebula light.',
       afterIntro: 'The ring lights hold steady. Across the glass, the Reed has a clear approach.',
+      narration: [
+        { needFlag: 'c2_ring_lit', text: 'The ring lights hold steady. Across the glass, the Reed has a clear approach.' },
+        { needFlag: 'c2_tamsin_calm', text: 'A cue from the Reed is queued on the ring controls. Tamsin holds position while you recover the pattern.' }
+      ],
       goals: [{ text: 'Light the docking ring', needFlag: 'c2_ring_lit' }],
       banter: [
         { companion: 'ori', text: 'I can put each ship on its own line of text. The one that keeps repeating is the Reed.' },
@@ -62,7 +66,7 @@ window.Story[2] = {
             start: 'a',
             nodes: {
               a: { speaker: 'Pilot Tamsin', afterFlag: 'c2_ring_lit', afterText: 'Harbor Nine, this is the Reed. I see the ring lights and I’m holding on approach.', text: 'Harbor Nine, this is the Reed. Hull intact, fuel low, static across the display. I cannot see your docking lights. Is anyone there?', choices: [
-                { text: '“I am here, Tamsin. We will do this one step at a time.”', id: 'c2_tamsin_calm', unlock: 'The simultaneous docking check gains advantage.', check: { stat: 'emp', dc: 13, onPass: 'calm', onFail: 'uncertain' }, setFlag: 'c2_tamsin_calm', xp: 15 },
+                { text: '“I am here, Tamsin. We will do this one step at a time.”', id: 'c2_tamsin_calm', unlock: 'Tamsin sends the first cue to the ring controls. The simultaneous docking check gains advantage.', check: { stat: 'emp', dc: 13, onPass: 'calm', onFail: 'uncertain' }, setFlag: 'c2_tamsin_calm', xp: 15 },
                 { text: '“Hold position. How much fuel do you have?”', next: 'fuel' },
                 { text: '“The lights are out. Give me a minute.”', afterFlag: 'c2_ring_lit',
                   afterText: '“The approach is lit. Do you still have fuel to hold?”', next: 'fuel' }
@@ -124,7 +128,7 @@ window.Story[2] = {
               win: { speaker: 'Pip', text: 'Pip will share the list. Thank you for asking first.', choices: [
                 { text: '“Thank you, Pip.”', next: 'done' }
               ] },
-              done: { speaker: 'Pip', text: 'Manifest unlocked. Crate seven is on the heavy side. Pip thinks.' }
+              done: { speaker: 'Pip', text: 'Manifest unlocked. One crate has an extra counterweight. Compare equal loads and write down what happens. Pip will watch the lift.' }
             }
           }
         },

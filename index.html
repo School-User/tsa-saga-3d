@@ -26,6 +26,7 @@
           <p id="room-kicker" class="eyebrow"></p>
           <h1 id="room-title" tabindex="-1"></h1>
           <span id="room-tag" class="deck-chip"></span>
+          <p id="first-steps" class="small" hidden></p>
         </div>
         <aside class="mission">
           <section class="side-panel" aria-labelledby="objectives-title">
@@ -38,7 +39,10 @@
           <section class="transcript" aria-label="Game Master">
             <p class="eyebrow">Game Master</p>
             <p id="room-intro" role="status"></p>
-            <div id="room-action"></div>
+            <details id="scene-banter" hidden>
+              <summary>Companion chatter</summary>
+              <div id="scene-lines"></div>
+            </details>
           </section>
           <div class="walk-ui">
             <div id="prompt" class="walk-prompt" role="status"></div>

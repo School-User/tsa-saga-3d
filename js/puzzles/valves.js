@@ -67,7 +67,7 @@ export function start(el, ctx, done) {
     'Skip puzzle (no XP)');
   skip.addEventListener('click', function () { finish('skip'); });
   var back = mk('button', { type: 'button', 'class': 'btn ghost small' }, 'Back');
-  back.addEventListener('click', function () { finish(false); });
+  back.addEventListener('click', function () { finish(solving); });
   controls.appendChild(skip); controls.appendChild(back);
   el.appendChild(controls);
 
@@ -95,7 +95,7 @@ export function start(el, ctx, done) {
   function solve() {
     solving = true;
     buttons.forEach(function (b) { b.disabled = true; });
-    reset.disabled = true; skip.disabled = true; back.disabled = true;
+    reset.disabled = true; skip.disabled = true;
     live.textContent = 'The valves hiss open one after another. The gauge steadies and climbs.';
     timer = setTimeout(function () { finish(true); }, 1000);
   }

@@ -76,7 +76,14 @@ export function hotspotStatus(run, hotspot) {
 }
 
 export function collect(run, item) {
-  if (item && !run.inventory.includes(item)) run.inventory.push(item);
+  if (!item || run.inventory.includes(item)) return false;
+  run.inventory.push(item);
+  return true;
+}
+
+export function applyRoomAid(run, room) {
+  const aid = room.entryAid;
+  return !!(aid && meetsFlags(run, aid) && collect(run, aid.item));
 }
 
 export function setFlag(run, flag, chapters, items) {

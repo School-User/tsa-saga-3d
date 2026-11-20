@@ -26,7 +26,7 @@ A checked reply shows its stat, difficulty class (DC) and any situational or com
 
 ## Party
 
-Companion presence and eligible aid are shown in the party panel. Aid applies automatically to the listed check when its conditions hold. Room banter can be read through the panel and occasional scene prompts. Each line is available when its companion is present and any required flag is set. Banter carries no check, XP or progression requirement.
+Companion presence and eligible aid are shown in the party panel. Aid applies automatically to the listed check when its conditions hold. Room banter appears in the Party panel and under Companion chatter in the Game Master transcript. Each line is available when its companion is present and any required flag is set. Banter carries no check, XP or progression requirement.
 
 | Companion | Joins | Grants |
 | --- | --- | --- |
@@ -45,19 +45,19 @@ The journal groups entries by chapter and room. Record the eleven inspections an
 | Item | Acquisition | Use |
 | --- | --- | --- |
 | Navigator badge | Inspect the open cryo pod. | Identifies the Navigator and records the handwritten note. |
-| Maintenance log | Read the Life Support log. | Points to the valve housing, unlocks a direct reply with ORI and grants advantage on the lab’s SCI version-header check. |
+| Maintenance log | Read the Life Support log, or receive it from ORI after a successful reassurance check. | Points to the valve housing, unlocks a direct reply with ORI and grants advantage on the lab’s SCI version-header check. |
 | Veil’s star chart | Welcome the Veil or save its recording, then close the channel. | Records Meridian’s route to Harbor Nine. |
 | Veil recording | Confirm the recording with the Veil. | Preserves its words and patterns for the fleet. |
 | Route plotted from pulses | Say goodbye to the Veil and close the channel. | Records the alternate route to Harbor Nine. |
-| Cargo manifest | Pip shares the list. | Carries Pip’s tentative clue about crate seven. The lift still requires the weight flag. |
+| Cargo manifest | Pip shares the list. | Confirms that the nine seals are intact and one crate carries an extra counterweight. The lift also requires the scale’s weight flag. |
 | Verdant’s relay message | Close the captains’ channel after confirming a docking plan. | Records Verdant’s distress call and coordinates. |
 | Greenhouse rota | Complete or bypass the greenhouse panel. | Keeps the final assignment where the player can refer to it. |
 
 ## Walking, interaction and screens
 
-Use an elevated third-person camera with a fixed north-up orientation. Walk with WASD or the arrow keys. The Navigator turns in the direction of movement. Within roughly 1.5 grid units of a hotspot’s reachable side, the HUD shows its label and the E prompt. Press E for the nearest eligible target, or click or tap a visible target. A distant target uses the same guided walk as Room objects. The player can approach a locked door and read what it needs. Each hotspot takes one action to open once the Navigator is nearby.
+Use an elevated third-person camera with a fixed north-up orientation. Walk with WASD or the arrow keys. The Navigator turns in the direction of movement. Within roughly 1.5 grid units of a hotspot’s reachable side, the HUD shows its label and the E prompt. Press E for the nearest eligible target, or click or tap a visible target. A distant target uses the same guided walk as Room objects. A floor ring marks the destination during a guided walk. Each room is framed to fit its diorama. The player can approach a locked door and read what it needs. Each hotspot takes one action to open once the Navigator is nearby.
 
-The room HUD shows chapter, global room number, room name, stats, rank and goals. It provides Journal, Inventory, Party, Room objects and Pause. Use Tab or Shift+Tab to move between controls and Enter or Space to activate them. The Room objects list gives each hotspot’s name, compass direction and lock state. Activating an entry guides the Navigator along the room’s walking path to its reachable side and presents the same interaction. This provides a keyboard and screen-reader route through each room. Text and shapes carry all the information shown by accent colours. Puzzle panels retain their keyboard controls. When a panel opens, suspend movement, move focus to the panel heading and keep focus inside. On close, return focus to the opener or room heading. Escape closes a panel through its Back action or opens Pause from the room. Dialogue choices and dice results remain visible until the player advances.
+The room HUD shows chapter, global room number, room name, stats, rank and goals. It provides Journal, Inventory, Party, Room objects, How to play and Pause. The first room prompts the player to walk to the console and use E, with the tap and Room objects routes also available. On narrow screens the room name, objectives and Room objects sit above the canvas. Use Tab or Shift+Tab to move between controls and Enter or Space to activate them. The Room objects list gives each hotspot’s name, compass direction and lock state. Activating an entry guides the Navigator along the room’s walking path to its reachable side and presents the same interaction. This provides a keyboard and screen-reader route through each room. Text and shapes carry all the information shown by accent colours. Puzzle panels retain their keyboard controls. When a panel opens, suspend movement, move focus to the panel heading and keep focus inside. On close, return focus to the opener or room heading. Escape closes a panel or opens Pause from the room. Leaving a solve confirmation records the completed repair immediately. Dialogue choices and dice results remain visible until the player advances.
 
 Screen order is Title → class selection → chapter intro → room → chapter complete → next chapter intro. During a room the player can open dialogue, inspect an object, use a puzzle overlay or read from the HUD. Every exit inside a chapter leads to the next room. The three chapter exits lead to a chapter-complete card with the chosen ending, route text and current rank. Continue on Verdant’s completion card opens **The Long Quiet**. The finale joins one epilogue sentence from each chapter in order, using the nine authored variants, and shows final stats, rank, XP and journal coverage. The finale shows a 3D exterior of Verdant with the selected seed plan visible on the ark. If WebGL 2 is unavailable, the chapter illustration and the ending caption accompany the epilogue. Play again offers a fresh run after confirming the save reset.
 
@@ -65,18 +65,18 @@ The title has Continue, New game and a list of reached chapters. New game asks b
 
 ## Puzzle panels
 
-Use the existing nine puzzle rules in 2D overlays tied to the in-world consoles. Higher scores reveal the existing hints or aids. The room mesh shows context and resolved state while the panel owns moves and validation. Back returns without advancing the objective. The source bypass thresholds are listed below. Completing or bypassing sets the same original puzzle flag. A bypass uses the authored room line and resolves the same visual state as a solve. Each final conversation stays behind its puzzle flag, even after opening the room early through a chapter revisit.
+Use nine puzzle panels tied to the in-world consoles. Higher scores and successful checks can provide hints and aids. The room mesh shows context and resolved state while the panel owns moves and validation. Back leaves an unfinished objective available to retry. The source bypass thresholds are listed below. Completing or bypassing sets the same original puzzle flag. A bypass uses the authored room line and resolves the same visual state as a solve. Each final conversation stays behind its puzzle flag, even after opening the room early through a chapter revisit.
 
 | Room | Panel and player action | Score aid | Bypass unlock |
 | --- | --- | --- | --- |
-| 1 | `power` — rotate conductors in the 5×5 grid so the source reaches the door. | ENG 5 marks conductors on the live route. | 12 rotations or 3 minutes. |
+| 1 | `power` — rotate conductors in the 5×5 grid so the source reaches the door. | ENG 5 explains the direction the fixed door terminal accepts power from. | 12 rotations or 3 minutes. |
 | 2 | `valves` — deduce and enter the order of four valves. | SCI 4 explains how to treat A and D as a single block. | 3 incorrect sequences. |
-| 3 | `cipher` — derive a backward shift from a known marker and transmit it. | SCI 4 gives a second marker without alphabet wraparound. | 3 rejected transmissions. |
-| 4 | `memory` — replay or step through five cues, then repeat them on four numbered and shaped pads. | SCI 4 slows continuous playback. | 3 incorrect entries. |
-| 5 | `scales` — compare nine crates in up to three weighings, then name the heaviest. | SCI 4 suggests weighing three against three. | 3 incorrect identifications. |
-| 6 | `tuner` — adjust frequency and phase and confirm at peak signal strength. | Everyone gets a numerical readout. ENG 4 gives frequency direction, and a successful Veil signal check reveals the phase. | 3 unsuccessful locks. |
+| 3 | `cipher` — derive a backward shift from a known marker and submit it for verification on Transmit. | SCI 4 gives a second marker without alphabet wraparound. | 3 rejected transmissions. |
+| 4 | `memory` — replay or step through five cues, then repeat them on four numbered and shaped pads. | SCI 4 slows continuous playback. Reassuring Tamsin adds the first cue to the deck controls. | 3 incorrect entries. |
+| 5 | `scales` — record three distinct equal-load weighings that identify a unique candidate, then name the heavy crate. | SCI 4 suggests weighing three against three. | 3 inconclusive records or incorrect identifications. |
+| 6 | `tuner` — adjust frequency and phase and confirm at peak signal strength. | Everyone gets a numerical readout. ENG 4 compares successive readings, and a successful Veil signal check narrows the phase to a band. | 3 unsuccessful locks. |
 | 7 | `lights` — toggle each selected lock and its orthogonal neighbours until all sixteen are dark. | SCI 4 says four presses suffice. | 20 presses. |
-| 8 | `assign` — assign three botanists to distinct greenhouses using the rota clues. | SCI 4 points to Cy’s two constraints. | 3 incorrect rotas. |
+| 8 | `assign` — assign three botanists to distinct greenhouses using the rota clues. | SCI 4 points to Cy’s clues. Reassuring Fern places those clues together on a marked-up copy. | 3 incorrect rotas. |
 | 9 | `sliding` — slide the eight numbered pipe sections into order, with the socket last. | ENG 4 says twelve moves suffice. | 40 moves. |
 
 ## Room layouts and progression
@@ -108,17 +108,18 @@ Listed hotspot IDs are prefixed by chapter in the JS, so `p_power` below is `c1_
 | ORI terminal | (4, −3) | `lab` dialogue sets `c1_lab_open`; either objective may be completed first. |
 | Lab pressure door | (0, −6) | `door2` exit requires both `c1_air_ok` and `c1_lab_open`. |
 
-**Room 3 · The Signal** • bounds x −7 to 7, z −6 to 6 • spawn (0, 4)
+**Room 3 · Signal Laboratory** • bounds x −7 to 7, z −6 to 6 • spawn (0, 4)
 
 | Object | (x,z) | Interaction |
 | --- | --- | --- |
+| Sample bench | (4, 3) | The entrance opens onto a working lab with sample trays and a scanner. |
 | Glass dome ribs and distant red star | dome rim; star beyond (0, −12) | Scenery. |
 | Pulse monitor | (−4, −2) | `listen` inspection presents the timing visually. |
 | Decoder desk | (−4, 2) | `p_cipher` opens `cipher` and sets `c1_decoded`. |
 | Reply terminal | (4, −2) | `talk` becomes actionable when `c1_decoded` is set. |
 | Navigation console | (0, −4) | `finish` chapter exit requires `c1_contacted`. |
 
-The Veil may come aboard (`c1_ending_peace`), give permission to carry a recording (`c1_ending_study`), or remain alone to keep broadcasting (`c1_ending_quiet`). The SCI reply can also set `c1_knows_signal`. It gives a phase clue at the Harbor Nine tuner and carries no gate. The ending confirmation is followed by closing the channel to set `c1_contacted`. The first two outcomes bring the Veil’s chart. The third plots the route from pulse timing, reflected on the Meridian completion card and Harbor Nine intro.
+The Veil may come aboard (`c1_ending_peace`), give permission to carry a recording (`c1_ending_study`), or remain alone to keep broadcasting (`c1_ending_quiet`). The SCI reply can also set `c1_knows_signal`. It gives a phase band at the Harbor Nine tuner. The ending confirmation is followed by closing the channel to set `c1_contacted`. The first two outcomes bring the Veil’s chart. The third plots the route from pulse timing, reflected on the Meridian completion card and Harbor Nine intro.
 
 ### Chapter 2 — Harbor Nine
 
@@ -129,7 +130,7 @@ The Veil may come aboard (`c1_ending_peace`), give permission to carry a recordi
 | Ring window and three distant ships | (0, −6); ships beyond window | `look1` inspection at the sill (0, −4). |
 | Four-pad control desk | (−3, −1) | `p_memory` opens `memory` and sets `c2_ring_lit`. |
 | Radio text display | (3, 1) | `radio1` dialogue. Optional reassurance sets `c2_tamsin_calm`. |
-| Ring braces and lamps | (−5, −3), (5, −3) | Scenery. Lamps switch on with `c2_ring_lit`. |
+| Ring braces and lamps | (−5, −3), (5, −3) | Scenery. Lamps switch on with `c2_ring_lit`. The ring lights chase in sequence with motion enabled. |
 | Cargo stair hatch | (4, −5) | `door1` exit requires `c2_ring_lit`. |
 
 **Room 5 · Cargo Bay** • bounds x −9 to 9, z −7 to 7 • spawn (0, 5)

@@ -23,7 +23,6 @@ var LAYOUT = [
   ['c1', 't3', 'l0', 'e0', 'c3'],
   ['e0', 'c0', 'e0', 't1', 'e0']
 ];
-var PATH = { '2,1': 1, '1,1': 1, '1,2': 1, '1,3': 1, '2,3': 1 }; // hint dots (0-based row,col)
 var SRC = 10, DOOR = 14, LIMIT_MS = 180000, SKIP_AT = 12;
 
 function mk(tag, attrs, text) {
@@ -42,7 +41,7 @@ export function start(el, ctx, done) {
   el.appendChild(mk('p', { 'class': 'small' },
     'Route power from Meridian’s cryo supply (IN) to the pressure door relay (OUT). ' +
     'Click a fitting, or focus it with the arrow keys and press Enter or Space, to turn it clockwise.' +
-    (hint ? ' Faint dots mark the conductors on the live route.' : '')));
+    (hint ? ' ENG 5 · Check the fixed door terminal first. It can only receive power from the west.' : '')));
   el.appendChild(mk('p', { 'class': 'small' },
     'Example: one turn changes a vertical fitting (│) to horizontal (─).'));
 
@@ -78,10 +77,6 @@ export function start(el, ctx, done) {
       b.appendChild(mk('span', { 'aria-hidden': 'true', style: 'position:absolute;left:0;right:0;' +
         'bottom:2px;font-size:.5rem;letter-spacing:.05em;color:var(--soft);pointer-events:none' },
         t.type === 's' ? 'IN' : 'OUT'));
-    }
-    if (hint && PATH[r + ',' + c]) {
-      b.appendChild(mk('div', { style: 'position:absolute;left:4px;top:4px;width:5px;height:5px;' +
-        'border-radius:50%;background:rgba(232,236,248,.5);pointer-events:none' }));
     }
     (function (index) {
       b.addEventListener('click', function () { rotate(index); });
@@ -131,7 +126,7 @@ export function start(el, ctx, done) {
     var fixed = t.type === 's' || t.type === 'd' || t.type === 'e';
     return 'Row ' + (t.r + 1) + ', column ' + (t.c + 1) + ': ' + NAMES[t.type] +
       (t.type === 'e' ? '' : ', connects ' + conns(t).map(function (d) { return ['north', 'east', 'south', 'west'][d]; }).join(' and ')) +
-      ', ' + (on ? 'powered' : 'no power') + (hint && PATH[t.r + ',' + t.c] ? ', on the live route' : '') +
+      ', ' + (on ? 'powered' : 'no power') +
       (fixed ? '. Fixed.' : '. Press Enter or Space to rotate.');
   }
 
@@ -160,9 +155,9 @@ export function start(el, ctx, done) {
 
   function solve() {
     solving = true; clearTimeout(timer);
-    skip.disabled = true; back.disabled = true;
+    skip.disabled = true;
     live.textContent = 'Power reaches the door.';
-    setTimeout(function () { finish(true); }, 1000);
+    timer = setTimeout(function () { finish(true); }, 1000);
   }
 
   function rotate(i) {
@@ -184,7 +179,7 @@ export function start(el, ctx, done) {
     'Skip puzzle (no XP)');
   skip.addEventListener('click', function () { finish('skip'); });
   var back = mk('button', { type: 'button', 'class': 'btn ghost small' }, 'Back');
-  back.addEventListener('click', function () { finish(false); });
+  back.addEventListener('click', function () { finish(solving); });
   controls.appendChild(skip); controls.appendChild(back);
   el.appendChild(controls);
 

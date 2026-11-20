@@ -23,6 +23,7 @@ export const layouts = {
     prop('door', 0, -6, 'LAB DOOR', 'c1_door2')
   ]),
   3: room(7, 6, 4, [
+    prop('labBench', 4, 3, 'SAMPLE BENCH'),
     prop('wave', -4, -2, 'PULSE MONITOR', 'c1_listen'),
     prop('decoder', -4, 2, 'DECODER', 'c1_p_cipher'),
     prop('talk', 4, -2, 'THE VEIL', 'c1_talk', 'c1_decoded', 'veil'),
@@ -89,5 +90,6 @@ export const sizes = {
   log: [1.28, .77, 1.46], wave: [1.55, .85, 1.58], stand: [1.05, .75, 1.4],
   pads: [1.55, .9, 1.28], crate: [1.28, 1.28, 1.15], robot: [.84, .84, 1.55],
   scale: [1.95, .95, 1.74], rig: [1.9, 1.1, 2.25], lamp: [.5, .52, 1.4],
+  labBench: [2.2, .95, 1.24],
   cabinet: [1.65, .94, 1.85], greenhouse: [3.35, 2.8, 2.1], crew: [2.9, .74, 1.75]
 };

@@ -58,13 +58,14 @@ export function start(el, ctx, done) {
   var strengthLine = mk('p', { 'class': 'small', role: 'status' });
   el.appendChild(strengthLine);
   var engineeringHint;
+  var previousStrength;
   if (eng) {
     engineeringHint = mk('p', { 'class': 'small' });
     el.appendChild(engineeringHint);
   }
   if (ctx?.hasFlag?.('c1_knows_signal')) {
     el.appendChild(mk('p', { 'class': 'small' },
-      'Signal evidence · You recognize the Veil’s three-pulse interval. Start with phase 3.'));
+      'Signal evidence · The Veil’s bursts put phase in the band from 2 to 4.'));
   }
 
   el.appendChild(live);
@@ -77,7 +78,7 @@ export function start(el, ctx, done) {
     'Skip puzzle (no XP)');
   skip.addEventListener('click', function () { finish('skip'); });
   var back = mk('button', { type: 'button', 'class': 'btn ghost small' }, 'Back');
-  back.addEventListener('click', function () { finish('back'); });
+  back.addEventListener('click', function () { finish(solving ? 'solved' : 'back'); });
   el.appendChild(skip); el.appendChild(back);
 
   freqInput.addEventListener('input', onInput);
@@ -100,10 +101,12 @@ export function start(el, ctx, done) {
     bar.setAttribute('aria-valuenow', String(value));
     strengthLine.textContent = 'Signal strength: ' + value + '%';
     if (engineeringHint) {
-      const direction = freq < TARGET_FREQ ? 'Raise the frequency.'
-        : freq > TARGET_FREQ ? 'Lower the frequency.' : 'Frequency is aligned.';
-      engineeringHint.textContent = 'ENG 4 · ' + direction;
+      const trend = previousStrength === undefined ? 'Move one dial at a time to compare readings.'
+        : value > previousStrength ? 'Closer to peak.'
+        : value < previousStrength ? 'Farther from peak.' : 'Strength held steady.';
+      engineeringHint.textContent = 'ENG 4 · ' + trend;
     }
+    previousStrength = value;
   }
 
   function lock() {
@@ -114,7 +117,6 @@ export function start(el, ctx, done) {
       phaseInput.disabled = true;
       lockBtn.disabled = true;
       skip.disabled = true;
-      back.disabled = true;
       live.textContent = 'Carrier locked. The static falls away and the signal comes in clean.';
       timer = setTimeout(function () { finish('solved'); }, 1000);
       return;

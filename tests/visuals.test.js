@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import { characters, characterId } from '../js/story/characters.js';
 import { T, palette } from '../js/world/geometry.js';
+import { roomFrame } from '../js/world/view.js';
 import { layouts } from '../js/world/layouts.js';
 import { buildCharacter, bobOffset } from '../js/world/characters.js';
 import { buildFinale, finaleCaption, finaleEnding } from '../js/world/finale.js';
@@ -35,6 +36,15 @@ for (let id = 1; id <= 9; id++) {
   if (piece.stream) assert.equal(piece.stream.visible, false);
   updateSetpiece(piece, { [piece.flag]: true }, colors);
   assert.ok(lights.every(light => light.material.color.getHex() === colors.bright));
+  if (piece.cadence) {
+    animateSetpiece(piece, 170, false);
+    const animated = lights.map(light => light.material.color.getHex());
+    assert.ok(animated.some(color => color !== colors.bright));
+    animateSetpiece(piece, 550, false);
+    assert.notDeepEqual(lights.map(light => light.material.color.getHex()), animated);
+    animateSetpiece(piece, 550, true);
+    assert.ok(lights.every(light => light.material.color.getHex() === colors.bright));
+  }
   if (piece.stream) {
     assert.equal(piece.stream.visible, true);
     assert.ok(piece.ripples.every(ripple => ripple.visible));
@@ -71,14 +81,21 @@ try {
   for (const [id, layout] of Object.entries(layouts)) {
     const colors = palette[Math.ceil(id / 3) - 1];
     const group = new T.Group();
+    for (const ratio of [.8, 1.8]) {
+      const { half, center } = roomFrame(layout, Number(id), ratio);
+      assert.ok(half * ratio > layout.x);
+      assert.ok(half - Math.abs(center) > layout.z * .72);
+    }
     for (const prop of layout.props) {
       const visual = buildProp(group, prop, colors);
       updateProp(prop, visual, { flags: {} }, 'Locked', colors);
       if (visual.figure) assert.equal(visual.figure.visible, false);
+      if (visual.aid) assert.equal(visual.aid.visible, false);
       if (visual.panels) assert.equal(visual.inset.visible, true);
 
-      updateProp(prop, visual, { flags: { [prop.flag]: true } }, 'Open', colors);
+      updateProp(prop, visual, { flags: { [prop.flag]: true, [visual.aidFlag]: true } }, 'Open', colors);
       if (visual.figure) assert.equal(visual.figure.visible, true);
+      if (visual.aid) assert.equal(visual.aid.visible, true);
       if (visual.panels) {
         assert.equal(visual.inset.visible, false);
         assert.ok(visual.panels.every(panel => Math.abs(panel.position.x) > .9));

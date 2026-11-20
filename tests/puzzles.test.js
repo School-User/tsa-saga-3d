@@ -95,6 +95,13 @@ try {
       if (dial !== 3) assert.ok(signalStrength(fixed, dial + Math.sign(3 - dial)) > signalStrength(fixed, dial));
     }
   }
+  const assistedTuner = open('tuner', { stat: () => 5, hasFlag: flag => flag === 'c1_knows_signal' });
+  assert.match(assistedTuner.content.textContent, /band from 2 to 4/);
+  assert.doesNotMatch(assistedTuner.content.textContent, /phase 3|Raise the frequency|Lower the frequency|Frequency is aligned/i);
+  assistedTuner.input('tuner-freq', 1);
+  assert.match(assistedTuner.content.textContent, /Closer to peak/);
+  assistedTuner.input('tuner-freq', 0);
+  assert.match(assistedTuner.content.textContent, /Farther from peak/);
   const tuner = open('tuner');
   assert.match(tuner.content.textContent, /Signal strength: 28%/);
   tuner.input('tuner-freq', 1);
@@ -117,9 +124,12 @@ try {
   cipher.button('Transmit').click();
   assert.match(cipher.content.textContent, /whole shift from 0 to 25/);
   assert.equal(cipher.button('Skip puzzle (no XP)').hidden, true);
+  const cipherPrompt = cipher.content.textContent;
+  for (let shift = 0; shift < 26; shift++) {
+    cipher.input('cipher-shift', shift);
+    assert.equal(cipher.content.textContent, cipherPrompt, 'Changing the dial does not reveal a mapping');
+  }
   cipher.input('cipher-shift', 7);
-  assert.doesNotMatch(cipher.content.textContent, /WE ARE NOT ALONE/);
-  assert.match(cipher.content.textContent, /D → W/);
   cipher.button('Transmit').click();
   cipher.solved();
   const cipherBypass = open('cipher');
@@ -130,7 +140,10 @@ try {
   cipherBypass.button('Skip puzzle (no XP)').click();
   assert.deepEqual(cipherBypass.outcomes, [{ solved: false, skipped: true }]);
 
+  const helpedMemory = open('memory', { hasFlag: flag => flag === 'c2_tamsin_calm' });
+  assert.match(helpedMemory.content.textContent, /First cue: Pad 3/);
   const memory = open('memory');
+  assert.doesNotMatch(memory.content.textContent, /First cue:/);
   const step = memory.button('Step through');
   const sequence = [3, 1, 4, 2, 3];
   sequence.forEach((pad, index) => {
@@ -145,12 +158,24 @@ try {
   sequence.forEach(pad => memory.button(`Pad ${pad}`).click());
   memory.solved();
 
-  const power = open('power');
-  const tiles = power.controls().slice(0, 25);
-  for (const [index, count] of [[11, 3], [6, 2], [7, 1], [8, 1], [13, 2]]) {
-    for (let turn = 0; turn < count; turn++) tiles[index].click();
+  function routePower(puzzle) {
+    const tiles = puzzle.controls().slice(0, 25);
+    for (const [index, count] of [[11, 3], [6, 2], [7, 1], [8, 1], [13, 2]]) {
+      for (let turn = 0; turn < count; turn++) tiles[index].click();
+    }
   }
+  const power = open('power', { stat: () => 5 });
+  assert.match(power.content.textContent, /fixed door terminal/);
+  assert.ok(power.controls().slice(0, 25).every(tile => !tile.getAttribute('aria-label').includes('live route')));
+  assert.equal(power.controls()[11].children.length, 5, 'No hint marker on the source elbow');
+  routePower(power);
   power.solved();
+  const powerDismiss = open('power');
+  routePower(powerDismiss);
+  assert.deepEqual(powerDismiss.outcomes, []);
+  powerDismiss.button('Back').click();
+  assert.equal(timerQueue.size, 0);
+  powerDismiss.solved();
 
   const valves = open('valves');
   const valveC = valves.button('C');
@@ -173,29 +198,70 @@ try {
   for (const tile of [3, 6, 5, 3, 8, 2, 3, 5, 6, 8, 5, 6]) sliding.button(String(tile)).click();
   sliding.solved();
 
+  const annotatedRota = open('assign', { hasFlag: flag => flag === 'c3_fern_calm' });
+  assert.match(annotatedRota.content.textContent, /Fern’s corrections · Cy does not tend Vine. Cy does not tend Moss/);
   const rota = open('assign');
+  assert.doesNotMatch(rota.content.textContent, /Fern’s corrections/);
+  assert.match(rota.content.textContent, /Cy does not tend Vine/);
   const selects = rota.content.querySelectorAll('select');
   ['Vine', 'Moss', 'Dome'].forEach((place, index) => { selects[index].value = place; });
   rota.button('Check').click();
   rota.solved();
 
+  function placeCrates(puzzle, left, right) {
+    puzzle.controls().slice(0, 9).forEach((crate, index) => {
+      const id = index + 1;
+      const current = crate.textContent.endsWith(' L') ? 1 : crate.textContent.endsWith(' R') ? 2 : 0;
+      const target = left.includes(id) ? 1 : right.includes(id) ? 2 : 0;
+      for (let turns = (target - current + 3) % 3; turns > 0; turns--) crate.click();
+    });
+    puzzle.button('Weigh').click();
+  }
   const scales = open('scales');
-  const crates = scales.controls().slice(0, 9);
-  crates.slice(0, 3).forEach(crate => crate.click());
-  crates.slice(3, 6).forEach(crate => { crate.click(); crate.click(); });
-  scales.button('Weigh').click();
+  const name = scales.button('Name the heavy crate');
+  placeCrates(scales, [1], []);
+  assert.match(scales.content.textContent, /Weighings: 0 of 3/);
+  placeCrates(scales, [1, 2, 3], [4, 5, 6]);
   assert.match(scales.content.textContent, /the pans balance/);
-  crates.slice(0, 3).forEach(crate => { crate.click(); crate.click(); });
-  crates.slice(3, 6).forEach(crate => crate.click());
-  crates[6].click();
-  crates[7].click();
-  crates[7].click();
-  scales.button('Weigh').click();
+  assert.equal(name.hidden, true);
+  placeCrates(scales, [4, 5, 6], [1, 2, 3]);
+  assert.match(scales.content.textContent, /already been compared/);
+  assert.match(scales.content.textContent, /Weighings: 1 of 3/);
+  placeCrates(scales, [7], [8]);
   assert.match(scales.content.textContent, /the left pan sinks/);
-  scales.button('Name the heavy crate').click();
-  scales.controls().find(node => node.getAttribute('aria-label') === 'Crate 7').click();
+  assert.equal(name.hidden, true);
+  placeCrates(scales, [9], [8]);
+  assert.equal(name.hidden, false);
+  assert.match(scales.content.textContent, /1, 2, 3 vs 4, 5, 6/);
+  const pickCrate = (puzzle, id) => puzzle.controls().find(node => node.getAttribute('aria-label') === `Crate ${id}`).click();
+  name.click();
+  pickCrate(scales, 8);
+  scales.button('Confirm').click();
+  assert.match(scales.content.textContent, /does not fit your record/);
+  assert.equal(name.hidden, true);
+  scales.button('Reset balance').click();
+  assert.match(scales.content.textContent, /Left pan: empty.*Right pan: empty/);
+  assert.match(scales.content.textContent, /Weighings: 0 of 3/);
+  placeCrates(scales, [1, 2, 3], [4, 5, 6]);
+  placeCrates(scales, [7], [8]);
+  placeCrates(scales, [9], [8]);
+  name.click();
+  pickCrate(scales, 7);
   scales.button('Confirm').click();
   scales.solved();
+
+  const inconclusive = open('scales');
+  for (let attempt = 1; attempt <= 3; attempt++) {
+    placeCrates(inconclusive, [1], [2]);
+    placeCrates(inconclusive, [3], [4]);
+    placeCrates(inconclusive, [5], [6]);
+    assert.match(inconclusive.content.textContent, /still fits multiple crates/);
+    assert.equal(inconclusive.button('Name the heavy crate').hidden, true);
+    assert.equal(inconclusive.button('Skip puzzle (no XP)').hidden, attempt < 3);
+    if (attempt < 3) inconclusive.button('Reset balance').click();
+  }
+  inconclusive.button('Skip puzzle (no XP)').click();
+  assert.deepEqual(inconclusive.outcomes, [{ solved: false, skipped: true }]);
 } finally {
   Object.assign(globalThis, originalTimers);
   delete globalThis.document;

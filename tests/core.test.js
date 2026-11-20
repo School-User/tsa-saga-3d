@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import * as state from '../js/state.js';
 import { checkTerms, d20, presentCompanions, resolveCheck, resultText } from '../js/checks.js';
 import { layouts } from '../js/world/layouts.js';
+import { isVisible } from '../js/ui/modal.js';
 import { distanceTo, routeTo, walkable } from '../js/world/navigation.js';
 
 globalThis.window = {};
@@ -77,13 +78,31 @@ const lab = find('c1_lab');
 const archive = fresh();
 const archiveReply = nodeChoices(lab, 'a').find(entry => entry.id === 'c1_lab_archive');
 assert.equal(choiceAvailable(archive, archiveReply), false);
+const lifeSupport = rooms[1];
+const orisPod = find('c1_ori1');
+const calmOri = choice('c1_ori_calm');
+const failed = resolveCheck(archive, calmOri, companions, () => 1);
+assert.equal(failed.passed, false);
+assert.equal(state.applyRoomAid(archive, lifeSupport), false);
+assert.equal(choiceAvailable(archive, archiveReply), false);
+const reassured = fresh();
+const success = resolveCheck(reassured, calmOri, companions, () => 20);
+assert.equal(success.passed, true);
+followChoice(reassured, orisPod, calmOri, success.next);
+assert.equal(state.applyRoomAid(reassured, rooms[0]), false);
+assert.equal(state.applyRoomAid(reassured, lifeSupport), true);
+assert.equal(state.applyRoomAid(reassured, lifeSupport), false);
+assert.deepEqual(reassured.inventory, ['maintenance_log']);
+assert.equal(reassured.xp, 15);
+assert.deepEqual(reassured.journal, {});
+assert.equal(choiceAvailable(reassured, archiveReply), true);
 state.collect(archive, 'maintenance_log');
 assert.equal(choiceAvailable(archive, archiveReply), true);
 openDialogue(archive, lab);
 followChoice(archive, lab, archiveReply);
 assert.equal(archive.dialogues[lab.id].node, 'archive');
 assert.equal(archive.flags.c1_lab_open, true);
-assert.deepEqual(archive.rolls, {});
+assert.equal(Object.hasOwn(archive.rolls, archiveReply.id), false);
 assert.equal(archive.xp, 10);
 
 const cursor = openDialogue(run, lab);
@@ -128,6 +147,19 @@ followChoice(run, lab, nodeChoices(lab, 'wait')[0]);
 assert.equal(state.hotspotStatus(run, lab), 'Resume');
 followChoice(run, lab, nodeChoices(lab, 'done')[0]);
 assert.equal(state.hotspotStatus(run, lab), 'Complete');
+
+assert.match(rooms[2].title, /Laboratory/);
+assert.ok(layouts[3].props.some(prop => prop.type === 'labBench'));
+assert.ok(chapters[2].nextStop.trim());
+const pip = find('c2_pip');
+const manifest = items.find(item => item.id === 'cargo_manifest');
+assert.doesNotMatch(JSON.stringify([pip.dialogue, manifest]), /seven|crate 7/i);
+assert.equal(isVisible({ checkVisibility: () => true }), true);
+globalThis.getComputedStyle = node => ({ visibility: node.visibility });
+assert.equal(isVisible({ getClientRects: () => [{}], visibility: 'visible' }), true);
+assert.equal(isVisible({ getClientRects: () => [{}], visibility: 'hidden' }), false);
+assert.equal(isVisible({ getClientRects: () => [], visibility: 'visible' }), false);
+delete globalThis.getComputedStyle;
 
 const gates = [
   ['c1_power_on'], ['c1_air_ok', 'c1_lab_open'], ['c1_contacted'],

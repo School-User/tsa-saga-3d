@@ -1,25 +1,29 @@
-import { classes, chapterAt } from '../story/data.js';
+import { classes, chapterAt, companions } from '../story/data.js';
 import { hotspotStatus, meetsFlags, rankFor, STATS } from '../state.js';
+import { presentCompanions } from '../checks.js';
 import { get, el, button, statsText, title } from './dom.js';
 
-export function initializeHud(open, guide) {
+export function initializeHud(open) {
   const panels = [
     ['Journal', 'journal'], ['Inventory', 'inventory'], ['Party', 'party'],
-    ['Room objects', 'objects'], ['Pause', 'pause']
+    ['Room objects', 'objects'], ['How to play', 'help'], ['Pause', 'pause']
   ];
   for (const [label, id] of panels) {
     const control = button(label, () => open(id));
     control.dataset.panel = id;
     get('room-nav').append(control);
   }
-  get('room-action').append(button('Walk to the cryo console', () => guide('c1_p_power'), 'btn ghost small'));
 }
 
-export function showRoomHud(room, run) {
+export function showRoomHud(room, run, hasWorld) {
   get('room-kicker').textContent = `Chapter 0${room.chapter} / ${chapterAt(room.chapter).title}`;
   get('room-title').textContent = room.title;
   get('room-tag').textContent = `Room 0${room.id} / 09`;
   get('room-class').textContent = `Navigator / ${classes.find(entry => entry.id === run.classId).name}`;
+  get('scene-banter').open = false;
+  get('first-steps').textContent = hasWorld
+    ? 'Walk northwest to Power Conduits with WASD or the arrow keys. Press E when the prompt appears. You can also tap the console or use Room objects.'
+    : 'Use Room objects to open the cryo console.';
   setPrompt(null);
   title(get('room-title'));
 }
@@ -31,13 +35,17 @@ export function updateHud(room, run) {
   const repaired = run.flags[puzzle.setFlag];
   const opening = room.id === 1 && !repaired;
   const passage = exitStatus === 'Open' ? ` Next step: ${exit.label}.` : '';
-  const direction = opening ? ' Route power at the cryo console, or use Room objects to explore.' : '';
   get('room-nav').querySelector('[data-panel="objects"]').classList.toggle('first-route', opening);
-  const action = get('room-action');
-  if (!opening && action.contains(document.activeElement)) get('room-title').focus();
-  action.hidden = !opening;
+  get('first-steps').hidden = !opening;
   const outcome = room.narration?.find(entry => meetsFlags(run, entry));
-  const narration = (outcome?.text ?? (repaired ? room.afterIntro : room.intro)) + passage + direction;
+  const narration = (outcome?.text ?? (repaired ? room.afterIntro : room.intro)) + passage;
+  const present = presentCompanions(run, companions);
+  const lines = (room.banter ?? []).flatMap(line => {
+    const companion = present.find(entry => entry.id === line.companion);
+    return companion && meetsFlags(run, line) ? [el('p', 'small', `${companion.name} · ${line.text}`)] : [];
+  });
+  get('scene-lines').replaceChildren(...lines);
+  get('scene-banter').hidden = !lines.length;
   if (get('room-intro').textContent !== narration) get('room-intro').textContent = narration;
   const goals = room.goals.map(goal => {
     const completed = meetsFlags(run, goal);
