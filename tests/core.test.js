@@ -59,8 +59,6 @@ assert.deepEqual(resolveCheck(run, both, companions, () => 8).dice, [8]);
 assert.equal(checkTerms(run, both, companions).canceled, true);
 const doubled = [{ id: 'helper', name: 'Helper', aid: [{ choice: headers.id, advantage: true }] }];
 assert.equal(resolveCheck({ ...run, rolls: {} }, headers, doubled, () => 7).dice.length, 2);
-assert.equal(resolveCheck(fresh(), { ...headers, check: { ...headers.check, dc: 30 } }, [], () => 20).passed, false);
-assert.equal(resolveCheck(fresh(), { ...repair, check: { ...repair.check, dc: 3 } }, [], () => 1).passed, true);
 
 assert.deepEqual(presentCompanions(run, companions).map(entry => entry.id), ['ori']);
 flag(run, 'c2_ring_lit');

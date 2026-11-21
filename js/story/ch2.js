@@ -38,8 +38,8 @@ window.Story[2] = {
     ]
   },
   items: [
-    { id: 'cargo_manifest', name: 'Cargo manifest', text: 'Pip’s cargo list confirms that all nine seals are intact. One crate was loaded with an extra counterweight, but the weight column is blank.', needFlag: 'c2_manifest' },
-    { id: 'verdant_relay', name: 'Verdant’s relay message', text: 'A distress message from the ark ship Verdant, with the coordinates of its seed vault entrance.', needFlag: 'c2_contacted' }
+    { id: 'cargo_manifest', name: 'Cargo manifest', text: 'Pip’s carefully ruled cargo list confirms that all nine seals are intact. One crate was loaded with an extra counterweight, but the weight column is blank.', needFlag: 'c2_manifest' },
+    { id: 'verdant_relay', name: 'Verdant’s relay message', text: 'A crackling relay transcript from the ark ship Verdant, with the coordinates of its seed vault entrance.', needFlag: 'c2_contacted' }
   ],
   levels: [
     {
@@ -66,8 +66,8 @@ window.Story[2] = {
             start: 'a',
             nodes: {
               a: { speaker: 'Pilot Tamsin', afterFlag: 'c2_ring_lit', afterText: 'Harbor Nine, this is the Reed. I see the ring lights and I’m holding on approach.', text: 'Harbor Nine, this is the Reed. Hull intact, fuel low, static across the display. I cannot see your docking lights. Is anyone there?', choices: [
-                { text: '“I am here, Tamsin. We will do this one step at a time.”', id: 'c2_tamsin_calm', unlock: 'Tamsin sends the first cue to the ring controls. The simultaneous docking check gains advantage.', check: { stat: 'emp', dc: 13, onPass: 'calm', onFail: 'uncertain' }, setFlag: 'c2_tamsin_calm', xp: 15 },
-                { text: '“Hold position. How much fuel do you have?”', next: 'fuel' },
+                { text: '“I am here, Tamsin. We will do this one step at a time.”', id: 'c2_tamsin_calm', unlock: 'Tamsin sends the first cue to the ring controls. The simultaneous docking check gains advantage.', check: { skill: 'Persuasion', stat: 'emp', dc: 13, onPass: 'calm', onFail: 'uncertain' }, setFlag: 'c2_tamsin_calm', xp: 15 },
+                { roleplay: true, text: '“Hold position. How much fuel do you have?”', next: 'fuel' },
                 { text: '“The lights are out. Give me a minute.”', afterFlag: 'c2_ring_lit',
                   afterText: '“The approach is lit. Do you still have fuel to hold?”', next: 'fuel' }
               ] },
@@ -117,16 +117,16 @@ window.Story[2] = {
             start: 'a',
             nodes: {
               a: { speaker: 'Pip', text: 'Manifest is locked. Pip is guarding the cargo list. A crate fell once. Pip counts them every time now.', choices: [
-                { text: '“One dropped crate tells me very little about you, Pip.”', id: 'c2_pip_emp', unlock: 'Pip agrees to share the manifest.', check: { stat: 'emp', dc: 12, onPass: 'win', onFail: 'ask' }, setFlag: 'c2_manifest', xp: 20 },
-                { text: '“This lock code belonged to the last owner. Let’s look at the log.”', id: 'c2_pip_sci', unlock: 'Pip agrees to share the manifest.', check: { stat: 'sci', dc: 12, onPass: 'win', onFail: 'ask' }, setFlag: 'c2_manifest', xp: 20 },
-                { text: '“May I recalibrate your grip sensor?”', id: 'c2_pip_eng', unlock: 'Pip agrees to share the manifest.', check: { stat: 'eng', dc: 12, onPass: 'win', onFail: 'ask' }, setFlag: 'c2_manifest', xp: 20 },
-                { text: '“Please, Pip. People are waiting.”', next: 'ask' }
+                { text: '“One dropped crate tells me very little about you, Pip.”', id: 'c2_pip_emp', unlock: 'Pip agrees to share the manifest.', check: { skill: 'Insight', stat: 'emp', dc: 12, onPass: 'win', onFail: 'ask' }, setFlag: 'c2_manifest', xp: 20 },
+                { text: '“This lock code belonged to the last owner. Let’s look at the log.”', id: 'c2_pip_sci', unlock: 'Pip agrees to share the manifest.', check: { skill: 'Investigation', stat: 'sci', dc: 12, onPass: 'win', onFail: 'ask' }, setFlag: 'c2_manifest', xp: 20 },
+                { text: '“May I recalibrate your grip sensor?”', id: 'c2_pip_eng', unlock: 'Pip agrees to share the manifest.', check: { skill: 'Tinkering', stat: 'eng', dc: 12, onPass: 'win', onFail: 'ask' }, setFlag: 'c2_manifest', xp: 20 },
+                { roleplay: true, text: '“Please, Pip. People are waiting.”', next: 'ask' }
               ] },
               ask: { speaker: 'Pip', text: 'Pip would like to finish the count. People are waiting. If you count crates with Pip, Pip will share.', choices: [
                 { text: 'Count the rows with Pip.', id: 'c2_pip_count', next: 'win', setFlag: 'c2_manifest', xp: 10 }
               ] },
               win: { speaker: 'Pip', text: 'Pip will share the list. Thank you for asking first.', choices: [
-                { text: '“Thank you, Pip.”', next: 'done' }
+                { roleplay: true, text: '“Thank you, Pip.”', next: 'done' }
               ] },
               done: { speaker: 'Pip', text: 'Manifest unlocked. One crate has an extra counterweight. Compare equal loads and write down what happens. Pip will watch the lift.' }
             }
@@ -167,7 +167,7 @@ window.Story[2] = {
               a: { speaker: 'Game Master', text: 'Three messages arrive together. The Reed, the Halcyon and the Marigold are all low on fuel and ask to dock first. The Halcyon adds a line about injured crew. All three wait for your instructions.', choices: [
                 { text: '“We will dock in arrival order. Tamsin, you have waited longest.”', next: 'fair' },
                 { text: '“Halcyon, your crew need the infirmary. You dock first.”', next: 'medic' },
-                { text: '“Three bays, three approaches. Tamsin, help me guide everyone in together.”', id: 'c2_cap_all', unlock: 'The captains can now confirm simultaneous docking.', check: { stat: 'emp', dc: 15, onPass: 'all', onFail: 'overlap' }, xp: 25 },
+                { text: '“Three bays, three approaches. Tamsin, help me guide everyone in together.”', id: 'c2_cap_all', unlock: 'The captains can now confirm simultaneous docking.', check: { skill: 'Persuasion', stat: 'emp', dc: 15, onPass: 'all', onFail: 'overlap' }, xp: 25 },
                 { text: '“Everyone hold while I look at the arrivals.”', next: 'hold' }
               ] },
               hold: { speaker: 'ORI', text: 'The Reed arrived first. The Halcyon requests medical help. The Marigold confirms it can hold. I have put the three reports side by side.', choices: [

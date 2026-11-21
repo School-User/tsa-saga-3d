@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import { mkdir, writeFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 import { chromium, serve, until } from './chromium.mjs';
+import { verifyCanvas } from './e2e-canvas.mjs';
 
 const root = fileURLToPath(new URL('..', import.meta.url)).replace(/\/$/, '');
 const shots = new URL('./shots/', import.meta.url);
@@ -74,14 +75,43 @@ async function play({ send, evaluate }) {
     await writeFile(new URL(name + '.png', shots), Buffer.from(data, 'base64'));
   };
 
-  await click('New game');
-  await evaluate('document.querySelector(".class-choice").click()');
-  await click('Confirm background');
-  await click('Begin chapter');
+  for (const [index, id] of [[1, 'diplomat'], [2, 'scientist'], [0, 'engineer']]) {
+    if (await current()) {
+      await click('Pause', '#room-nav button');
+      await click('Save and return to title', '#overlay button');
+    }
+    await click('New game');
+    const reset = await evaluate('document.querySelector("#overlay").open');
+    if (reset) await click('Choose a new background', '#overlay button');
+    await evaluate(`document.querySelectorAll('.class-choice')[${index}].click();
+      document.querySelectorAll('input[name="ideal"]')[1].click();
+      document.querySelectorAll('input[name="bond"]')[1].click()`);
+    await click('Confirm background');
+    const created = await current();
+    assert.equal(created.classId, id);
+    assert.ok((await evaluate('document.querySelector(".read-aloud").textContent')).includes(created.personality.ideal));
+    await click('Begin chapter');
+    assert.equal(await evaluate('window.__game.roomId'), 1);
+    assert.match(await evaluate('document.querySelector("#passive-clue").textContent'), /handrail/);
+    if (id === 'engineer') break;
+    await interact('c1_p_power');
+    await solvePower();
+    await interact('c1_door1');
+    assert.equal(await evaluate('window.__game.roomId'), 2);
+    assert.equal(await evaluate('document.querySelector("#passive-clue").hidden'), id !== 'scientist');
+  }
 
   assert.match(await evaluate('document.querySelector("#first-steps").textContent'), /Press E/);
   assert.match(await evaluate('document.querySelector("#scene-lines").textContent'), /chronometer/);
   await checkPhoneLayout();
+
+  await evaluate('document.querySelector("[data-panel=sheet]").focus()');
+  await key('Enter');
+  assert.equal(await evaluate('document.activeElement.textContent'), 'Character sheet');
+  assert.match(await evaluate('document.querySelector("#overlay-content").textContent'), /Mechanic.*Inspiration 0\/1.*Repair, Tinkering.*Ideal.*Bond/);
+  await shot('character-sheet');
+  await key('Escape');
+  assert.equal(await evaluate('document.activeElement.dataset.panel'), 'sheet');
 
   const visibilityDescriptor = await evaluate('Boolean(Object.getOwnPropertyDescriptor(Element.prototype, "checkVisibility"))');
   assert.equal(visibilityDescriptor, true);
@@ -122,23 +152,28 @@ async function play({ send, evaluate }) {
   await key('Escape');
   await until(() => evaluate('!document.querySelector("#overlay").open'));
 
-  async function roll(id, face, mode, total, passed) {
+  async function roll(id, face, mode, total, passed, spend = false) {
     await evaluate(`window.__game.forceRoll(${face})`);
-    await choose(id);
+    if (spend) {
+      await evaluate('document.querySelector(".choice-list input[type=checkbox]").click()');
+      assert.match(await evaluate(`document.querySelector('[data-choice="${id}"]').textContent`), /advantage/);
+      assert.equal(await evaluate(`document.querySelector('[data-choice="${id}"]').click(); true`), true);
+    } else await choose(id);
     const result = (await current()).rolls[id];
     assert.equal(result.mode, mode);
     assert.deepEqual(result.dice, mode === 'normal' ? [face] : [face, face]);
     assert.equal(result.total, total);
     assert.equal(result.passed, passed);
-    assert.equal(await evaluate('document.querySelectorAll(".dice .die").length'), result.dice.length);
-    assert.equal(await evaluate('Boolean(document.querySelector(".dice-enter"))'), false);
+    assert.equal(await evaluate('Number(document.querySelector(".dice").dataset.dice)'), result.dice.length);
+    assert.equal(await evaluate('Boolean(document.querySelector(".dice canvas"))'), true);
+    assert.equal(await evaluate('Boolean(document.querySelector(".dice[data-rolling]"))'), false);
     assert.match(await evaluate('document.querySelector(".result").textContent'), new RegExp(`Total ${total} .* ${passed ? 'Pass' : 'Fail'}`));
   }
 
   for (let room = 1; room <= 9; room++) {
     assert.equal(await evaluate('window.__game.roomId'), room);
     await verifyCanvas(evaluate);
-    if ([1, 5, 9].includes(room)) await shot(`room-${room}`);
+    if ([1, 2, 3, 5, 9].includes(room)) await shot(`room-${room}`);
     const hotspots = await evaluate('window.__game.hotspots');
     const exit = hotspots.find(hotspot => hotspot.exit);
     const puzzle = hotspots.find(hotspot => hotspot.puzzle);
@@ -180,7 +215,11 @@ async function play({ send, evaluate }) {
     }
     if (room === 4) {
       await interact('c2_radio1');
-      await roll('c2_tamsin_calm', 20, 'normal', 19, true);
+      await send('Emulation.setEmulatedMedia', { features: [{ name: 'prefers-reduced-motion', value: 'no-preference' }] });
+      await roll('c2_tamsin_calm', 16, 'advantage', 15, true, true);
+      await shot('dice-roll');
+      assert.equal((await current()).inspiration, 0);
+      await send('Emulation.setEmulatedMedia', { features: [{ name: 'prefers-reduced-motion', value: 'reduce' }] });
       await choose('continue');
       await choose('c2_radio1.calm.0');
       await choose('done');
@@ -189,6 +228,7 @@ async function play({ send, evaluate }) {
     if (room === 5) {
       await interact('c2_pip');
       await choose('c2_pip.a.3');
+      assert.equal((await current()).inspiration, 1, 'Roleplay awards Inspiration');
       await choose('c2_pip_count');
       await choose('c2_pip.win.0');
       assert.doesNotMatch(await evaluate('document.querySelector("#overlay .dialogue-line").textContent'), /seven|7/i);
@@ -230,6 +270,8 @@ async function play({ send, evaluate }) {
       assert.equal(await evaluate('document.querySelector("#room-title").textContent'), 'Signal Laboratory');
       await interact(gated.id);
       await roll('c1_veil_sci', 20, 'normal', 19, true);
+      assert.equal((await current()).inspiration, 1);
+      assert.match(await evaluate('document.querySelector("#overlay .read-aloud").textContent'), /Natural 20/);
       assert.match(await evaluate('document.querySelector(".unlock-note").textContent'), /phase clue/);
       await choose('continue');
       await choose('c1_talk.study.0');
@@ -261,11 +303,16 @@ async function play({ send, evaluate }) {
     await interact(exit.id);
     if (room % 3 === 0) {
       assert.equal((await current()).screen, 'complete');
+      assert.match(await evaluate('document.querySelector(".session-recap").textContent'), /Session recap.*Best roll.*Natural 20s.*Loot/);
+      if (room === 3) await shot('chapter-card');
       if (room === 9) {
         assert.match(await evaluate('document.querySelector(".route-copy").textContent'), /observation deck/);
       }
       await click('Continue');
-      if (room < 9) await click('Begin chapter');
+      if (room < 9) {
+        assert.match(await evaluate('document.querySelector(".read-aloud h2").textContent'), /Previously, on Drift Signal/);
+        await click('Begin chapter');
+      }
     }
     console.log(`Room ${room} passed`);
   }
@@ -341,36 +388,12 @@ async function play({ send, evaluate }) {
           && bounds('#goals').bottom <= canvas.top
           && bounds('[data-panel=objects]').bottom <= canvas.top;
       })()`), true, 'Phone viewport fits the HUD and keeps objectives and Room objects above the canvas');
+      await verifyCanvas(evaluate);
+      await shot('phone-390x844');
     } finally {
       await send('Emulation.clearDeviceMetricsOverride');
       await send('Emulation.setTouchEmulationEnabled', { enabled: false });
     }
   }
 
-}
-
-async function verifyCanvas(evaluate) {
-  await evaluate('new Promise(done => requestAnimationFrame(() => requestAnimationFrame(() => done(true))))');
-  await until(() => evaluate(`(() => {
-    const canvas = document.querySelector('#world');
-    const gl = canvas.getContext('webgl2');
-    if (!canvas.checkVisibility() || !gl || gl.isContextLost()) return false;
-    const width = gl.drawingBufferWidth;
-    const height = gl.drawingBufferHeight;
-    const pixels = new Uint8Array(width * height * 4);
-    gl.readPixels(0, 0, width, height, gl.RGBA, gl.UNSIGNED_BYTE, pixels);
-    const colors = new Set();
-    let opaque = 0;
-    // Read a sparse grid directly from the preserved WebGL framebuffer.
-    for (let row = 1; row < 20; row++) {
-      for (let col = 1; col < 32; col++) {
-        const offset = (Math.floor(height * row / 20) * width + Math.floor(width * col / 32)) * 4;
-        if (pixels[offset + 3] >= 240) {
-          opaque++;
-          colors.add(pixels.slice(offset, offset + 3).join(','));
-        }
-      }
-    }
-    return opaque > 35 && colors.size > 8;
-  })()`));
 }

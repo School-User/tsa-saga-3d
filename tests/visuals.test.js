@@ -107,3 +107,18 @@ try {
   if (previousDocument) globalThis.document = previousDocument;
   else delete globalThis.document;
 }
+
+const { numberFaces } = await import('../js/ui/dice.js');
+const die = new T.IcosahedronGeometry(.71, 0);
+const rotations = numberFaces(die);
+const positions = die.getAttribute('position');
+assert.equal(rotations.length, 20);
+assert.equal(positions.count, 60);
+rotations.forEach((rotation, face) => {
+  const [a, b, tip] = [0, 1, 2].map(offset =>
+    new T.Vector3().fromBufferAttribute(positions, face * 3 + offset).applyQuaternion(rotation));
+  const normal = b.clone().sub(a).cross(tip.clone().sub(a)).normalize();
+  assert.ok(normal.distanceTo(new T.Vector3(0, 1, 0)) < 1e-5, `Face ${face + 1} faces up`);
+  assert.ok(Math.abs(a.z - b.z) < 1e-5 && tip.z < a.z, `Face ${face + 1} reads upright`);
+});
+die.dispose();

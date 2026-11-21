@@ -38,7 +38,7 @@ window.Story[3] = {
     ]
   },
   items: [
-    { id: 'greenhouse_rota', name: 'Greenhouse rota', text: 'Ana tends Vine, Bo tends Moss and Cy tends Dome. Fern can plan tomorrow’s watering from this copy.', needFlag: 'c3_crew_set' }
+    { id: 'greenhouse_rota', name: 'Greenhouse rota', text: 'Fresh ink on a waterproof copy. Ana tends Vine, Bo tends Moss and Cy tends Dome. Fern can plan tomorrow’s watering from it.', needFlag: 'c3_crew_set' }
   ],
   levels: [
     {
@@ -61,10 +61,10 @@ window.Story[3] = {
             start: 'a',
             nodes: {
               a: { speaker: 'Fern', afterFlag: 'c3_vault_open', afterText: 'You freed the door. The cold drawers are holding temperature, and I can check the seeds one row at a time.', text: 'Navigator? The vault doors are frozen. The seeds are fine, I think. I count them every night, and the count keeps changing. I may be ill.', choices: [
-                { text: '“You sound tired, Fern. We can take this one drawer at a time.”', id: 'c3_fern_calm', unlock: 'Fern will mark up the greenhouse rota. The seed release check gains advantage.', check: { stat: 'emp', dc: 13, onPass: 'calm', onFail: 'uncertain' }, setFlag: 'c3_fern_calm', xp: 15 },
+                { text: '“You sound tired, Fern. We can take this one drawer at a time.”', id: 'c3_fern_calm', unlock: 'Fern will mark up the greenhouse rota. The seed release check gains advantage.', check: { skill: 'Insight', stat: 'emp', dc: 13, onPass: 'calm', onFail: 'uncertain' }, setFlag: 'c3_fern_calm', xp: 15 },
                 { text: '“What exactly is frozen?”', afterFlag: 'c3_vault_open',
                   afterText: '“How are the drawers holding up?”', next: 'what' },
-                { text: '“Show me the door.”', next: 'what' }
+                { roleplay: true, text: '“Show me the door.”', next: 'what' }
               ] },
               calm: { speaker: 'Fern', afterFlag: 'c3_vault_open', afterText: 'You freed the door. The cold drawers are holding temperature, and I can check the seeds one row at a time.', text: 'Tired. Yes, I can work with tired. There are sixteen locks. Each switch flips itself and its neighbours in the same row and column, one space away. They must all be dark.', choices: [
                 { text: '“I can do fiddly.”', next: 'end' }
@@ -114,9 +114,9 @@ window.Story[3] = {
             start: 'a',
             nodes: {
               a: { speaker: 'Ana and Cy', text: 'Ana: Cy keeps watering the Vine house on my day! Cy: I thought it was my day. That is what I read on the rota. Both turn to you.', choices: [
-                { text: '“You both care about these plants. Let’s hear what each of you saw.”', id: 'c3_quarrel_emp', check: { stat: 'emp', dc: 12, onPass: 'win', onFail: 'rota' }, setFlag: 'c3_crew_calm', xp: 20 },
-                { text: '“Let me read the column headings with you. I think these entries are by house.”', id: 'c3_quarrel_sci', check: { stat: 'sci', dc: 12, onPass: 'win', onFail: 'rota' }, setFlag: 'c3_crew_calm', xp: 20 },
-                { text: '“Show me the rota and I’ll help sort it.”', next: 'rota' }
+                { text: '“You both care about these plants. Let’s hear what each of you saw.”', id: 'c3_quarrel_emp', check: { skill: 'Persuasion', stat: 'emp', dc: 12, onPass: 'win', onFail: 'rota' }, setFlag: 'c3_crew_calm', xp: 20 },
+                { text: '“Let me read the column headings with you. I think these entries are by house.”', id: 'c3_quarrel_sci', check: { skill: 'Investigation', stat: 'sci', dc: 12, onPass: 'win', onFail: 'rota' }, setFlag: 'c3_crew_calm', xp: 20 },
+                { roleplay: true, text: '“Show me the rota and I’ll help sort it.”', next: 'rota' }
               ] },
               rota: { speaker: 'Ana and Cy', text: 'Ana: Bo is on it too. I think Bo went to check the compost. Cy: Let’s get the three houses down clearly so Bo can read it when they get back.', choices: [
                 { text: 'Offer to write out a clean rota.', id: 'c3_quarrel_rota', next: 'end', setFlag: 'c3_crew_calm', xp: 10 }
@@ -162,9 +162,9 @@ window.Story[3] = {
             start: 'a',
             nodes: {
               a: { speaker: 'Fern', text: 'Water flows again. Thank you. We have enough seed stock for one plan. We could grow it here, keep it safe for another world, or send it out to find one. Which would you choose?', choices: [
-                { text: '“Replant the dome. Let it grow here.”', next: 'replant' },
+                { roleplay: true, text: '“Replant the dome. Let it grow here.”', next: 'replant' },
                 { text: '“Seal the seeds in the vault for the next world.”', next: 'vault' },
-                { text: '“Open the glass. Give the seeds a chance somewhere beyond the fleet.”', id: 'c3_fern_release', unlock: 'Fern is ready to confirm seed release.', check: { stat: 'emp', dc: 14, onPass: 'release', onFail: 'pause' }, xp: 25 },
+                { text: '“Open the glass. Give the seeds a chance somewhere beyond the fleet.”', id: 'c3_fern_release', unlock: 'Fern is ready to confirm seed release.', check: { skill: 'Persuasion', stat: 'emp', dc: 14, onPass: 'release', onFail: 'pause' }, xp: 25 },
                 { text: '“Let me think a little longer.”', next: 'think' }
               ] },
               think: { speaker: 'Game Master', text: 'You have time. Through the return window, you can follow one bubble the whole length of the pipe.', choices: [

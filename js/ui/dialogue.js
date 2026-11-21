@@ -1,8 +1,10 @@
-import { checkTerms, resultText, termsText } from '../checks.js';
+import { checkTerms, naturalLine, resultText, skillLabel, termsText } from '../checks.js';
 import { choiceAvailable, nodeChoices } from '../dialogue.js';
 import { companions, items } from '../story/data.js';
 import { characterId } from '../story/characters.js';
 import { portrait } from './portraits.js';
+import { replyText } from '../session.js';
+import { createDiceTray } from './dice.js';
 import { el, button, reducedMotion } from './dom.js';
 
 export function showDialogue(modal, run, hotspot, actions) {
@@ -16,21 +18,35 @@ export function showDialogue(modal, run, hotspot, actions) {
       heading.prepend(portrait(speaker));
     }
     const line = node.afterFlag && run.flags[node.afterFlag] ? node.afterText : node.text;
-    content.append(el('p', 'dialogue-line', line));
+    content.append(el('p', node.speaker === 'Game Master' ? 'dialogue-line read-aloud' : 'dialogue-line', line));
     if (cursor.pending) {
       const result = run.rolls[cursor.pending];
       const choice = nodeChoices(hotspot, cursor.node).find(entry => entry.id === cursor.pending);
-      showResult(content, result, actions, choice?.unlock);
+      showResult(content, result, actions, choice);
     } else {
       const group = el('div', 'choice-list');
       const responseHeading = el('p', 'eyebrow speaker-badge', 'Navigator');
       responseHeading.prepend(portrait('navigator'));
       group.append(responseHeading);
-      for (const choice of nodeChoices(hotspot, cursor.node)) {
-        const pick = button('', () => actions.choose(choice.id), 'response');
+      const choices = nodeChoices(hotspot, cursor.node);
+      const spend = el('input');
+      spend.type = 'checkbox';
+      const previews = [];
+      if (run.inspiration && choices.some(choice => choice.check && !run.rolls[choice.id] && choiceAvailable(run, choice))) {
+        const label = el('label', 'toggle-option');
+        label.append(spend, 'Spend Inspiration on the next check for advantage');
+        group.append(label);
+        spend.addEventListener('change', () => previews.forEach(update => update()));
+      }
+      for (const choice of choices) {
+        const pick = button('', () => actions.choose(choice.id, spend.checked), 'response');
         pick.dataset.choice = choice.id;
-        const reply = choice.afterFlag && run.flags[choice.afterFlag] ? choice.afterText : choice.text;
-        pick.append(el('span', '', reply));
+        pick.append(el('span', '', replyText(run, choice)));
+        if (choice.roleplay) {
+          const reward = run.roleplay[choice.id] ? 'Recorded'
+            : run.inspiration ? 'Inspiration full' : 'Earn Inspiration';
+          pick.append(el('span', 'unlock-note', `Roleplay moment · ${reward}`));
+        }
         if (choice.needItem) {
           const available = choiceAvailable(run, choice);
           const item = items.find(entry => entry.id === choice.needItem);
@@ -39,7 +55,7 @@ export function showDialogue(modal, run, hotspot, actions) {
           pick.append(el('span', available ? 'unlock-note' : 'check-reasons',
             available ? `Available · ${item.name}` : `Locked · Collect ${item.name.toLowerCase()}`));
         }
-        if (choice.check) addTerms(pick, run, choice);
+        if (choice.check) previews.push(addTerms(pick, run, choice, spend));
         group.append(pick);
       }
       content.append(group);
@@ -48,29 +64,33 @@ export function showDialogue(modal, run, hotspot, actions) {
   }, actions.back);
 }
 
-function addTerms(pick, run, choice) {
+function addTerms(pick, run, choice, spend) {
   const saved = run.rolls[choice.id];
-  const terms = saved ?? checkTerms(run, choice, companions);
-  pick.append(el('span', 'check-terms', saved ? `Saved result · ${resultText(saved)}` : termsText(terms)));
-  if (terms.reasons.length) pick.append(el('span', 'check-reasons', terms.reasons.join(' ')));
+  const label = el('span', 'check-terms', skillLabel(choice.check));
+  const detail = el('span', 'check-reasons');
+  const reasons = el('span', 'check-reasons');
+  pick.append(label, detail, reasons);
+
+  function update() {
+    const terms = saved ?? checkTerms(run, choice, companions, spend.checked && choiceAvailable(run, choice));
+    detail.textContent = saved ? `Saved result · ${resultText(saved)}` : termsText(terms);
+    reasons.textContent = terms.reasons.join(' ');
+    reasons.hidden = !terms.reasons.length;
+  }
+  update();
+  return update;
 }
 
-function showResult(content, result, actions, unlock) {
-  const dice = el('div', `dice ${actions.animate && !reducedMotion() ? 'dice-enter' : ''}`);
-  dice.setAttribute('aria-hidden', 'true');
-  let kept = false;
-  for (const die of result.dice) {
-    const highlight = !kept && die === result.kept;
-    const face = el('span', highlight ? 'die kept' : 'die', die);
-    face.append(el('i'), el('b'));
-    if (highlight) kept = true;
-    dice.append(face);
-  }
-  const summary = el('p', `result ${result.passed ? 'pass' : 'fail'}`, resultText(result));
+function showResult(content, result, actions, choice) {
+  const dice = createDiceTray(result, actions.animate && !reducedMotion());
+  const summary = el('p', `result ${result.passed ? 'pass' : 'fail'}`,
+    `${skillLabel(choice.check)}. ${resultText(result)}`);
   summary.setAttribute('role', 'status');
   const next = button('Continue', () => actions.choose('continue'), 'btn primary');
   next.dataset.choice = 'continue';
   content.append(dice, summary);
-  if (result.passed && unlock) content.append(el('p', 'unlock-note', unlock));
+  const gm = naturalLine(result);
+  if (gm) content.append(el('p', 'read-aloud', `Game Master · ${gm}`));
+  if (result.passed && choice.unlock) content.append(el('p', 'unlock-note', choice.unlock));
   content.append(next);
 }

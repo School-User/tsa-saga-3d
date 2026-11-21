@@ -20,7 +20,7 @@ const backdrop = { 3: [12, 3.7], 4: [9, 3.8], 6: [7.9, 5.15], 8: [8, 3.8] };
 export function roomFrame(layout, id, ratio) {
   const [north, height] = backdrop[id] ?? [layout.z + .2, 2.7];
   const top = north * northSlope + height * heightSlope + .48;
-  const bottom = -(layout.z + .2) * northSlope - .52 * heightSlope - .45;
+  const bottom = -(layout.z + .75) * northSlope - .82 * heightSlope - .2;
   const half = Math.max((top - bottom) / 2, (layout.x + .86) / ratio);
   return { half, center: (top + bottom) / 2 };
 }
@@ -31,7 +31,7 @@ export function createWorld(canvas, handlers) {
   });
   if (!context) throw new Error('WebGL 2 unavailable');
   const renderer = new T.WebGLRenderer({ canvas, context });
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.6));
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
   renderer.setClearColor(0x070e18, 0);
   const scene = new T.Scene();
   const camera = new T.OrthographicCamera(-9, 9, 7, -7, .1, 170);
@@ -46,7 +46,7 @@ export function createWorld(canvas, handlers) {
   const keys = new Set();
   const motion = window.matchMedia('(prefers-reduced-motion: reduce)');
   let group, avatar, navigator, layout, room, colors, visuals, exteriorDetails, setpiece, destination;
-  let finale = false;
+  let finale = false, dirty = true, lastReduced;
   let last = performance.now(), width = 0, height = 0;
   let route = null, target = null, lastNear;
 
@@ -71,6 +71,7 @@ export function createWorld(canvas, handlers) {
     room = next;
     layout = layouts[room.id];
     colors = palette[room.chapter - 1];
+    rimLight.color.set([0x8bc9ff, 0xb9cafa, 0x9ce1d8][room.chapter - 1]);
     replaceScene();
     buildShell(group, layout, room.id, colors);
     destination = mesh(group, new T.RingGeometry(.32, .49, 24), colors.bright, 0, .038, 0,
@@ -84,18 +85,20 @@ export function createWorld(canvas, handlers) {
     group.add(avatar);
     avatar.position.set(0, 0, layout.spawn);
     avatar.rotation.y = Math.PI;
-    shadow(avatar, .89, .8);
+    shadow(avatar, 1.1, .92);
     navigator = buildCharacter(avatar, 'navigator');
     navigator.scale.setScalar(1.17);
   }
 
   function setFinale(flags) {
     finale = true;
+    rimLight.color.set(0x9ce1d8);
     replaceScene();
     buildFinale(group, flags);
   }
 
   function update(run) {
+    dirty = true;
     updateSetpiece(setpiece, run.flags, colors);
     layout.props.forEach((prop, index) => {
       const hotspot = room.hotspots.find(entry => entry.id === prop.hotspot);
@@ -127,6 +130,7 @@ export function createWorld(canvas, handlers) {
   }
 
   function cancel() {
+    dirty = true;
     keys.clear();
     if (destination) destination.visible = false;
     route = null;
@@ -175,7 +179,9 @@ export function createWorld(canvas, handlers) {
     const dt = Math.min((now - last) / 1000, .04);
     last = now;
     if (!canvas.clientWidth || !canvas.clientHeight || (!layout && !finale)) return;
-    if (handlers.active()) {
+    const active = handlers.active();
+    const moving = active && (keys.size || target);
+    if (active) {
       move(dt);
       if (!target && handlers.active()) {
         const near = nearest();
@@ -185,7 +191,8 @@ export function createWorld(canvas, handlers) {
         }
       }
     }
-    if (width !== canvas.clientWidth || height !== canvas.clientHeight) {
+    const resized = width !== canvas.clientWidth || height !== canvas.clientHeight;
+    if (resized) {
       width = canvas.clientWidth;
       height = canvas.clientHeight;
       renderer.setSize(width, height, false);
@@ -198,17 +205,22 @@ export function createWorld(canvas, handlers) {
       camera.bottom = center - half;
       camera.updateProjectionMatrix();
     }
+    const reduced = motion.matches;
+    const ambient = active && !reduced;
+    if (!resized && !dirty && !moving && (!ambient || finale) && reduced === lastReduced) return;
+    dirty = false;
+    lastReduced = reduced;
     if (finale) {
       camera.position.set(3, 9.5, 17);
       camera.lookAt(.5, 1.3, 0);
       renderer.render(scene, camera);
       return;
     }
-    navigator.position.y = bobOffset(now, 0, motion.matches);
+    navigator.rotation.z = bobOffset(now, 0, reduced) * (keys.size || route?.length ? .8 : .2);
     visuals.forEach(({ figure }, i) => {
-      if (figure) figure.position.y = 1.18 + bobOffset(now, i, motion.matches);
+      if (figure) figure.rotation.z = bobOffset(now, i, reduced) * .3;
     });
-    animateSetpiece(setpiece, now, motion.matches);
+    animateSetpiece(setpiece, now, reduced);
     camera.position.set(0, cameraRise, cameraRun);
     camera.lookAt(0, 0, 0);
     renderer.render(scene, camera);

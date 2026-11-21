@@ -1,16 +1,20 @@
+import { roomObservations } from './story/tabletop.js';
+import { restoreSession } from './session.js';
+
 export const SAVE_KEY = 'driftSignal3d.v1';
 export const STATS = ['eng', 'sci', 'emp'];
 export const modifier = score => score - 3;
 export const signed = number => number < 0 ? String(number) : `+${number}`;
 export const rankFor = xp => Math.min(9, 1 + Math.floor(xp / 45));
 
-export function newRun(background) {
-  return {
+export function newRun(background, personality) {
+  return restoreSession({
+    personality,
     version: 1, classId: background.id, stats: { ...background.stats },
     screen: 'intro', chapter: 1, room: 1, furthestRoom: 0, furthestChapter: 1,
     flags: {}, xp: 0, points: 0, awards: {}, journal: {}, inventory: [],
     rolls: {}, dialogues: {}, activeDialogue: null
-  };
+  });
 }
 
 export function loadRun(storage) {
@@ -28,7 +32,7 @@ export function loadRun(storage) {
       && Number.isInteger(run.xp) && run.xp >= 0 && Number.isInteger(run.points) && run.points >= 0
       && ['intro', 'room', 'complete', 'finale'].includes(run.screen)
       && [run.flags, run.awards, run.journal, run.dialogues, run.rolls].every(isRecord)
-      && Array.isArray(run.inventory)) return run;
+      && Array.isArray(run.inventory)) return restoreSession(run);
   } catch {
     // A damaged or unavailable save leaves the title ready for a fresh run.
   }
@@ -78,6 +82,7 @@ export function hotspotStatus(run, hotspot) {
 export function collect(run, item) {
   if (!item || run.inventory.includes(item)) return false;
   run.inventory.push(item);
+  run.lootChapters[item] = run.chapter;
   return true;
 }
 
@@ -97,6 +102,17 @@ export function setFlag(run, flag, chapters, items) {
 
 export function record(run, room, hotspot, text, bypass = false) {
   run.journal[hotspot.id] ??= { room, label: hotspot.label, text, bypass };
+}
+
+export function passivePerception(run) {
+  return 10 + modifier(run.stats.sci);
+}
+
+export function noticeRoom(run, roomId) {
+  const [dc, clue] = roomObservations[roomId - 1];
+  if (run.observations[roomId] || passivePerception(run) < dc) return false;
+  run.observations[roomId] = clue;
+  return true;
 }
 
 export function enterRoom(run, id) {

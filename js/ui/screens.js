@@ -1,7 +1,10 @@
-import { chapters, classes, chapterAt, journalSize } from '../story/data.js';
+import { chapters, classes, chapterAt, items, journalSize } from '../story/data.js';
 import { meetsFlags, rankFor, modifier, signed, reachedChapter } from '../state.js';
+import { personalities } from '../story/tabletop.js';
+import { personalityLine, sessionRecap } from '../session.js';
+import { skillLabel } from '../checks.js';
 import { finaleCaption } from '../world/finale.js';
-import { el, button, title, statsText } from './dom.js';
+import { el, button, title, statsText, list } from './dom.js';
 
 function art(chapter) {
   const figure = el('figure', 'card-art');
@@ -58,14 +61,25 @@ export function showClasses(root, actions) {
   const body = card(root, { label: 'Character creation', heading: 'Choose your background',
     tagline: 'Your background shapes your d20 checks and the clues you notice.' });
   const grid = el('div', 'classes');
-  const confirm = button('Confirm background', () => actions.start(selected), 'btn primary');
+  const traits = el('div', 'personality-options');
+  const selection = {};
+  const confirm = button('Confirm background', () => actions.start(selected, selection), 'btn primary');
   const choices = [];
   let selected = null;
   confirm.disabled = true;
   for (const background of classes) {
     const choice = button('', () => {
       selected = background;
-      confirm.disabled = false;
+      if (traits.dataset.classId !== background.id) {
+        traits.dataset.classId = background.id;
+        delete selection.ideal;
+        delete selection.bond;
+        confirm.disabled = true;
+        showPersonality(traits, background.id, (trait, value) => {
+          selection[trait] = value;
+          confirm.disabled = !selection.ideal || !selection.bond;
+        });
+      }
       choices.forEach(node => node.setAttribute('aria-pressed', String(node === choice)));
     }, 'class-choice');
     choice.setAttribute('aria-pressed', 'false');
@@ -76,9 +90,54 @@ export function showClasses(root, actions) {
     choices.push(choice);
     grid.append(choice);
   }
-  body.append(grid);
-  body.append(el('p', 'story-copy', 'On a check, roll a twenty-sided die and add your modifier and any companion aid. Match or beat the difficulty class (DC). A failed check leads to another way forward.'));
+  body.append(grid, traits);
+  body.append(el('p', 'story-copy', 'On a check, roll a twenty-sided die and add your modifier and any companion aid. Match or beat the difficulty class (DC). A natural 20 always passes and a natural 1 always fails. A failed check leaves another way forward.'));
   menu(body, confirm, button('Back', actions.title));
+}
+
+function showPersonality(container, classId, choose) {
+  container.replaceChildren();
+  for (const trait of ['ideal', 'bond']) {
+    const group = el('fieldset');
+    group.append(el('legend', '', trait === 'ideal' ? 'Choose an Ideal' : 'Choose a Bond'));
+    for (const value of personalities[classId][trait]) {
+      const label = el('label', 'toggle-option');
+      const input = el('input');
+      input.type = 'radio';
+      input.name = trait;
+      input.value = value;
+      input.addEventListener('change', () => choose(trait, value));
+      label.append(input, value);
+      group.append(label);
+    }
+    container.append(group);
+  }
+}
+
+function readAloud(body, text, heading = 'Game Master') {
+  const box = el('section', 'story-copy read-aloud');
+  box.append(el('h2', 'eyebrow', heading), el('p', '', text));
+  body.append(box);
+  return box;
+}
+
+function showSessionRecap(body, run, ending) {
+  const recap = sessionRecap(run, run.chapter, items, ending);
+  const panel = el('section', 'session-recap');
+  panel.append(el('h2', '', 'Session recap'));
+  if (recap.ending) panel.append(el('p', '', recap.ending));
+  if (recap.choices.length) {
+    const replies = el('details');
+    replies.append(el('summary', '', `Replies you chose (${recap.choices.length})`), list(recap.choices));
+    panel.append(replies);
+  }
+  const best = recap.best;
+  const check = best?.skill ? ` on ${skillLabel(best)}` : '';
+  panel.append(el('p', '', best
+    ? `Best roll · ${best.kept}${check} · ${best.total} total. Natural 20s · ${recap.natural20s}.`
+    : 'Best roll · none recorded. Natural 20s · 0.'));
+  panel.append(el('p', '', recap.loot.length ? `Loot · ${recap.loot.join(', ')}.` : 'Loot · none collected.'));
+  body.append(panel);
 }
 
 export function showChapter(root, run, actions) {
@@ -88,11 +147,19 @@ export function showChapter(root, run, actions) {
   if (run.screen === 'intro') {
     const body = card(root, { label, heading: chapter.title, tagline: chapter.tagline, image: chapter });
     const intro = chapter.introVariants?.find(entry => meetsFlags(run, entry))?.text ?? chapter.intro;
-    body.append(el('p', 'story-copy', intro));
+    if (run.chapter > 1) {
+      const prior = chapterAt(run.chapter - 1);
+      const outcome = prior.endings.find(entry => run.flags[entry.flag]);
+      readAloud(body, outcome?.text ?? prior.nextStop, 'Previously, on Drift Signal…');
+    }
+    readAloud(body, intro).append(el('p', 'small', personalityLine(run)));
     menu(body, button('Begin chapter', actions.begin, 'btn primary'), button('Title', actions.title));
   } else {
     const body = card(root, { label: `${label} complete`, heading: chapter.title, image: chapter });
-    body.append(el('p', 'story-copy', ending.text), el('p', 'route-copy', ending.nextStop ?? chapter.nextStop), rankLine(run));
+    showSessionRecap(body, run, ending);
+    const route = ending?.nextStop ?? chapter.nextStop;
+    if (route) body.append(el('p', 'route-copy', route));
+    body.append(rankLine(run));
     menu(body, button('Continue', actions.next, 'btn primary'), button('Title', actions.title));
   }
 }

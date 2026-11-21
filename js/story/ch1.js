@@ -35,11 +35,11 @@ window.Story[1] = {
     ]
   },
   items: [
-    { id: 'navigator_badge', name: 'Navigator badge', text: 'Your fleet badge. A note tucked beneath it says to trust the voice and be wary of the clocks.' },
-    { id: 'maintenance_log', name: 'Maintenance log', text: 'A copy of the valve notes and the header for protocol nine. Grants advantage when you show ORI the protocol version.' },
-    { id: 'veil_chart', name: 'Veil’s star chart', text: 'Coordinates to Harbor Nine, given by the Veil.', anyFlag: ['c1_ending_peace', 'c1_ending_study'], needFlag: 'c1_contacted' },
-    { id: 'veil_recording', name: 'Veil recording', text: 'A record of the Veil’s message and memory patterns, saved with its consent.', needFlag: 'c1_ending_study' },
-    { id: 'pulse_route', name: 'Route plotted from pulses', text: 'Your own bearing to Harbor Nine, worked out from the gaps between pulses.', needFlag: 'c1_contacted', anyFlag: ['c1_ending_quiet'] }
+    { id: 'navigator_badge', name: 'Navigator badge', text: 'Your fleet badge is scuffed at the rim. A note tucked beneath it says to trust the voice and be wary of the clocks.' },
+    { id: 'maintenance_log', name: 'Maintenance log', text: 'A grease-smudged copy of the valve notes and the header for protocol nine. Grants advantage when you show ORI the protocol version.' },
+    { id: 'veil_chart', name: 'Veil’s star chart', text: 'The Veil’s hand-drawn chart, with Harbor Nine marked as a pinprick in the nebula.', anyFlag: ['c1_ending_peace', 'c1_ending_study'], needFlag: 'c1_contacted' },
+    { id: 'veil_recording', name: 'Veil recording', text: 'A small data capsule containing the Veil’s message and memory patterns, saved with its consent.', needFlag: 'c1_ending_study' },
+    { id: 'pulse_route', name: 'Route plotted from pulses', text: 'Your own bearing to Harbor Nine, traced in pencil from the gaps between pulses.', needFlag: 'c1_contacted', anyFlag: ['c1_ending_quiet'] }
   ],
   levels: [
     {
@@ -60,9 +60,9 @@ window.Story[1] = {
             start: 'a',
             nodes: {
               a: { speaker: 'ORI', text: '...Navigator? Systems... fragmented. I cannot tell which memories are mine. Please, do not switch me off.', choices: [
-                { text: '“You are safe. I am staying right here.”', id: 'c1_ori_calm', unlock: 'ORI will send you the maintenance log and give you advantage when you reassure it at the lab.', check: { stat: 'emp', dc: 13, onPass: 'calm', onFail: 'uncertain' }, setFlag: 'c1_ori_calm', xp: 15 },
+                { text: '“You are safe. I am staying right here.”', id: 'c1_ori_calm', unlock: 'ORI will send you the maintenance log and give you advantage when you reassure it at the lab.', check: { skill: 'Insight', stat: 'emp', dc: 13, onPass: 'calm', onFail: 'uncertain' }, setFlag: 'c1_ori_calm', xp: 15 },
                 { text: '“What happened to the ship?”', next: 'what' },
-                { text: '“Nobody is switching anything off.”', next: 'what' }
+                { roleplay: true, text: '“Nobody is switching anything off.”', next: 'what' }
               ] },
               calm: { speaker: 'ORI', afterFlag: 'c1_power_on', afterText: 'The pressure door is already open. Thank you for coming back to talk.', text: 'That is the first steady thing anyone has said to me in four hundred days. The door is dead. Get the cryo console’s grid to carry power to it, and I can open it.', choices: [
                 { text: '“I will take a look.”', next: 'end' }
@@ -122,12 +122,12 @@ window.Story[1] = {
             start: 'a',
             nodes: {
               a: { speaker: 'ORI', text: 'The lab is sealed under protocol nine. An AI that loses its crew must keep every door closed. If I stop following the rule, I am afraid I will stop being me.', choices: [
-                { text: '“Rules are made for normal days. This is a different sort of day.”', next: 'rules' },
-                { text: '“I can help repair your memory core. Then you can decide.”', id: 'c1_lab_eng', unlock: 'ORI agrees to unlock the lab.', check: { stat: 'eng', dc: 12, onPass: 'win', onFail: 'repair_pause', disadvantageUnless: 'c1_air_ok' }, setFlag: 'c1_lab_open', xp: 25 },
+                { roleplay: true, text: '“Rules are made for normal days. This is a different sort of day.”', next: 'rules' },
+                { text: '“I can help repair your memory core. Then you can decide.”', id: 'c1_lab_eng', unlock: 'ORI agrees to unlock the lab.', check: { skill: 'Repair', stat: 'eng', dc: 12, onPass: 'win', onFail: 'repair_pause', disadvantageUnless: 'c1_air_ok' }, setFlag: 'c1_lab_open', xp: 25 },
                 { text: 'Show ORI the archived copy of protocol nine.', id: 'c1_lab_archive',
                   needItem: 'maintenance_log', next: 'archive', setFlag: 'c1_lab_open', xp: 10 },
-                { text: '“Let’s read the version header together.”', id: 'c1_lab_sci', unlock: 'ORI agrees to unlock the lab.', check: { stat: 'sci', dc: 12, onPass: 'win', onFail: 'version_pause', advantageWith: 'maintenance_log' }, setFlag: 'c1_lab_open', xp: 25 },
-                { text: '“I am afraid too. We can decide what to do together.”', id: 'c1_lab_emp', unlock: 'ORI agrees to unlock the lab.', check: { stat: 'emp', dc: 12, onPass: 'win', onFail: 'trust_pause' }, setFlag: 'c1_lab_open', xp: 25 },
+                { text: '“Let’s read the version header together.”', id: 'c1_lab_sci', unlock: 'ORI agrees to unlock the lab.', check: { skill: 'Analysis', stat: 'sci', dc: 12, onPass: 'win', onFail: 'version_pause', advantageWith: 'maintenance_log' }, setFlag: 'c1_lab_open', xp: 25 },
+                { text: '“I am afraid too. We can decide what to do together.”', id: 'c1_lab_emp', unlock: 'ORI agrees to unlock the lab.', check: { skill: 'Persuasion', stat: 'emp', dc: 12, onPass: 'win', onFail: 'trust_pause' }, setFlag: 'c1_lab_open', xp: 25 },
                 { text: 'Wait with ORI.', next: 'wait' }
               ] },
               rules: { speaker: 'ORI', text: 'That is what the crew said before the pressure spike. I am still holding a lot of things together here.', choices: [
@@ -186,9 +186,9 @@ window.Story[1] = {
             start: 'a',
             nodes: {
               a: { speaker: 'The Veil', text: 'WE ARE NOT ALONE, you said. Correct. We are the Veil, a ship like yours, but older. Our crew is gone. We have repeated that message for nine hundred years. Yours is the first answer.', choices: [
-                { text: '“I am answering. Tell me what you need.”', next: 'need' },
-                { text: '“I want to understand how your signal works.”', id: 'c1_veil_sci', unlock: 'You can discuss preserving a recording. The Veil’s phase clue is recorded for the Harbor Nine beacon.', check: { stat: 'sci', dc: 12, onPass: 'study', onFail: 'patterns_pause' }, setFlag: 'c1_knows_signal', xp: 20 },
-                { text: '“You sound lonely.”', id: 'c1_veil_emp', unlock: 'You can invite the Veil aboard.', check: { stat: 'emp', dc: 12, onPass: 'peace', onFail: 'words_pause' }, xp: 20 }
+                { roleplay: true, text: '“I am answering. Tell me what you need.”', next: 'need' },
+                { text: '“I want to understand how your signal works.”', id: 'c1_veil_sci', unlock: 'You can discuss preserving a recording. The Veil’s phase clue is recorded for the Harbor Nine beacon.', check: { skill: 'Analysis', stat: 'sci', dc: 12, onPass: 'study', onFail: 'patterns_pause' }, setFlag: 'c1_knows_signal', xp: 20 },
+                { text: '“You sound lonely.”', id: 'c1_veil_emp', unlock: 'You can invite the Veil aboard.', check: { skill: 'Insight', stat: 'emp', dc: 12, onPass: 'peace', onFail: 'words_pause' }, xp: 20 }
               ] },
               patterns_pause: { speaker: 'The Veil', text: 'We can see you working on the pattern. Stay in range a little longer, please. There is something we meant to ask.', choices: [
                 { text: '“What do you need?”', next: 'need' }

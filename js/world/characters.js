@@ -1,5 +1,5 @@
 import { characters } from '../story/characters.js';
-import { T, box, tube, mesh, beam } from './geometry.js';
+import { T, box, tube, mesh, beam, miniatureBase } from './geometry.js';
 
 function facet(group, radius, color, x, y, z, scale, glow = false) {
   const part = mesh(group, new T.IcosahedronGeometry(radius), color, x, y, z, { glow });
@@ -68,6 +68,7 @@ export function buildCharacter(parent, id) {
   const group = new T.Group();
   const colors = characters[id];
   parent.add(group);
+  miniatureBase(group, colors.shell);
   if (id === 'ori') ori(group, colors);
   else if (id === 'fern') fern(group, colors);
   else if (id === 'veil') veil(group, colors);

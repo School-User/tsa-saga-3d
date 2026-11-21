@@ -1,4 +1,6 @@
 import { chapters, classes, items, companions, chapterAt, roomAt } from './story/data.js';
+import { keepsakes } from './story/tabletop.js';
+import { recordReply } from './session.js';
 import * as state from './state.js';
 import { d20, resolveCheck } from './checks.js';
 import { openDialogue, nodeChoices, choiceAvailable, followChoice, advanceDialogue } from './dialogue.js';
@@ -9,7 +11,7 @@ import { chapterThemes } from './audio/themes.js';
 import { get, el, button, musicControls } from './ui/dom.js';
 import { createModal } from './ui/modal.js';
 import { showTitle, showClasses, showChapter, showFinale } from './ui/screens.js';
-import { initializeHud, showRoomHud, updateHud, setPrompt } from './ui/room.js';
+import { initializeHud, showRoomHud, updateHud, setPrompt, availableChatter } from './ui/room.js';
 import { openPanel } from './ui/panels.js';
 import { showDialogue } from './ui/dialogue.js';
 
@@ -48,8 +50,9 @@ function persist() {
 function refresh() {
   world?.update(run);
   updateHud(room, run);
+  if (get('scene-banter').open) markChatter();
   if (run.points) {
-    get('rank-panel').append(button('Spend points', () => panel('training'), 'btn ghost small'));
+    get('rank-progress').append(button('Spend points', () => panel('training'), 'btn ghost small'));
   }
 }
 
@@ -82,8 +85,8 @@ const actions = {
       }, 'btn primary'), button('Back', modal.close));
     }, modal.close);
   },
-  start(background) {
-    run = state.newRun(background);
+  start(background, personality) {
+    run = state.newRun(background, personality);
     transition();
   },
   select(chapter) {
@@ -124,7 +127,8 @@ function render() {
     canvas.setAttribute('aria-describedby', 'walk-help');
     world?.setRoom(room);
     showRoomHud(room, run, !!world);
-    if (state.applyRoomAid(run, room)) persist();
+    const receivedAid = state.applyRoomAid(run, room);
+    if (state.noticeRoom(run, room.id) || receivedAid) persist();
     refresh();
     if (run.activeDialogue && byId(run.activeDialogue)?.dialogue) displayDialogue(byId(run.activeDialogue));
   }
@@ -142,7 +146,7 @@ function panel(id) {
 function openRoomPanel(id) {
   openPanel(id, {
     modal, room, run, saved, close: modal.close, title: titleScreen, position: world?.position,
-    musicControls: actions.musicControls,
+    musicControls: actions.musicControls, markChatter,
     guide(id) {
       modal.close();
       guide(id);
@@ -165,7 +169,7 @@ function guide(id) {
 
 function message(heading, text) {
   modal.open('message', heading, content => {
-    content.append(el('p', 'dialogue-line', text), button('Back', modal.close, 'btn primary'));
+    content.append(el('p', 'dialogue-line read-aloud', text), button('Back', modal.close, 'btn primary'));
   }, modal.close);
 }
 
@@ -186,10 +190,12 @@ function interact(id) {
     const text = hotspot.afterText && run.flags[hotspot.afterFlag] ? hotspot.afterText : hotspot.text;
     state.record(run, room.id, hotspot, text);
     state.collect(run, hotspot.giveItem);
+    const treasure = keepsakes[id];
+    const found = state.collect(run, treasure?.id);
     state.award(run, id, hotspot.xp);
     persist();
     refresh();
-    message(hotspot.label, text);
+    message(hotspot.label, found ? `${text} You found a keepsake. ${treasure.name} — ${treasure.text}` : text);
   }
   return true;
 }
@@ -203,7 +209,7 @@ function exitRoom() {
 
 function displayDialogue(hotspot, animate = false) {
   showDialogue(modal, run, hotspot, {
-    animate, choose,
+    animate: animate && !test, choose,
     back() {
       run.activeDialogue = null;
       persist();
@@ -213,7 +219,7 @@ function displayDialogue(hotspot, animate = false) {
   });
 }
 
-function choose(id) {
+function choose(id, useInspiration = false) {
   const hotspot = byId(run?.activeDialogue);
   if (!hotspot || modal.kind !== 'dialogue') return false;
   const cursor = run.dialogues[hotspot.id];
@@ -227,9 +233,10 @@ function choose(id) {
   } else {
     const choice = nodeChoices(hotspot, cursor.node).find(entry => entry.id === id);
     if (!choice || !choiceAvailable(run, choice)) return false;
+    recordReply(run, choice);
     if (choice.check) {
       animate = !run.rolls[id];
-      resolveCheck(run, choice, companions, () => forcedRoll ?? d20());
+      resolveCheck(run, choice, companions, () => forcedRoll ?? d20(), useInspiration);
       forcedRoll = null;
       cursor.pending = id;
     } else followChoice(run, hotspot, choice);
@@ -274,7 +281,21 @@ function finishPuzzle(hotspot, bypass) {
   message(hotspot.label, text);
 }
 
+function markChatter() {
+  if (!room) return;
+  let changed = false;
+  for (const line of availableChatter(room, run)) {
+    if (run.chatter[line.id]) continue;
+    run.chatter[line.id] = true;
+    changed = true;
+  }
+  if (changed) persist();
+}
+
 initializeHud(panel);
+get('scene-banter').addEventListener('toggle', event => {
+  if (event.currentTarget.open) markChatter();
+});
 if (!test) {
   document.addEventListener('click', music.unlock);
   document.addEventListener('keydown', music.unlock);

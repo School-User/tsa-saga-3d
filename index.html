@@ -33,12 +33,16 @@
             <h2 id="objectives-title">Objectives</h2>
             <ul id="goals"></ul>
           </section>
-          <div id="rank-panel" class="side-panel"></div>
+          <div id="rank-panel" class="side-panel">
+            <div id="rank-progress"></div>
+            <p id="inspiration" class="small" aria-live="polite"></p>
+          </div>
         </aside>
         <div class="room-bottom">
-          <section class="transcript" aria-label="Game Master">
+          <section class="transcript read-aloud" aria-label="Game Master">
             <p class="eyebrow">Game Master</p>
             <p id="room-intro" role="status"></p>
+            <p id="passive-clue" class="passive-clue small" role="status" hidden></p>
             <details id="scene-banter" hidden>
               <summary>Companion chatter</summary>
               <div id="scene-lines"></div>

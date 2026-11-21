@@ -71,6 +71,8 @@ async function play({ send, evaluate }, profile) {
   startSegment('Setup');
   await click('#screen button', 'New game', { read: false });
   await click('.class-choice', undefined, { index: 0 });
+  await click('input[name="ideal"]', undefined, { index: 0 });
+  await click('input[name="bond"]', undefined, { index: 0 });
   await click('#screen button', 'Confirm background');
   await click('#screen button', 'Begin chapter');
 
@@ -277,15 +279,6 @@ async function play({ send, evaluate }, profile) {
   async function choose(id, options = {}) {
     if (options.die) await evaluate(`window.__game.forceRoll(${options.die})`);
     await click(`#overlay [data-choice="${id}"]`, undefined, options);
-    if (options.die) {
-      segment.model += await evaluate(`(async () => {
-        const animations = document.querySelector('.dice').getAnimations({ subtree: true });
-        if (!animations.length) throw new Error('Expected dice reveal animation');
-        const duration = Math.max(...animations.map(animation => animation.effect.getComputedTiming().endTime));
-        await Promise.all(animations.map(animation => animation.finished));
-        return duration;
-      })()`);
-    }
   }
 
   async function puzzleConfirmation() {

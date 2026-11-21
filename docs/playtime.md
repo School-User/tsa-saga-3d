@@ -7,32 +7,32 @@ Run `node tools/playtime.mjs` from the repository. It runs all three profiles in
 <!-- playtime-results:start -->
 | Pace | Segment | Paced seconds | Cumulative seconds | Browser seconds | Words | Actions | Puzzle moves |
 | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: |
-| Average player | Setup | 55.04 | 55.04 | 55.13 | 211 | 4 | 0 |
-| Average player | Room 1 | 122.24 | 122.24 | 121.77 | 314 | 14 | 9 |
-| Average player | Room 2 | 135.96 | 258.20 | 137.01 | 440 | 14 | 4 |
-| Average player | Room 3 | 114.20 | 372.39 | 114.72 | 375 | 14 | 2 |
-| Average player | Rooms 1–3 total | 372.39 | 372.39 | 373.50 | 1129 | 42 | 15 |
-| Average player | New game to chapter complete | 427.43 | 427.43 | 428.63 | 1340 | 46 | 15 |
-| Speedrunner | Setup | 2.00 | 2.00 | 2.05 | 211 | 4 | 0 |
-| Speedrunner | Room 1 | 9.29 | 9.29 | 10.79 | 314 | 14 | 9 |
-| Speedrunner | Room 2 | 10.39 | 19.68 | 12.35 | 440 | 14 | 4 |
-| Speedrunner | Room 3 | 9.14 | 28.82 | 11.46 | 375 | 14 | 2 |
-| Speedrunner | Rooms 1–3 total | 28.82 | 28.82 | 34.59 | 1129 | 42 | 15 |
-| Speedrunner | New game to chapter complete | 30.82 | 30.82 | 36.64 | 1340 | 46 | 15 |
-| Careful reader | Setup | 70.33 | 70.33 | 70.39 | 211 | 4 | 0 |
-| Careful reader | Room 1 | 230.95 | 230.95 | 229.87 | 558 | 27 | 9 |
-| Careful reader | Room 2 | 200.83 | 431.79 | 201.79 | 538 | 21 | 4 |
-| Careful reader | Room 3 | 169.50 | 601.29 | 169.42 | 460 | 17 | 2 |
-| Careful reader | Rooms 1–3 total | 601.29 | 601.29 | 601.08 | 1556 | 65 | 15 |
-| Careful reader | New game to chapter complete | 671.62 | 671.62 | 671.47 | 1767 | 69 | 15 |
+| Average player | Setup | 73.83 | 73.83 | 73.92 | 283 | 6 | 0 |
+| Average player | Room 1 | 127.72 | 127.72 | 128.14 | 335 | 14 | 9 |
+| Average player | Room 2 | 138.57 | 266.28 | 140.45 | 450 | 14 | 4 |
+| Average player | Room 3 | 116.28 | 382.57 | 116.11 | 383 | 14 | 2 |
+| Average player | Rooms 1–3 total | 382.57 | 382.57 | 384.71 | 1168 | 42 | 15 |
+| Average player | New game to chapter complete | 456.39 | 456.39 | 458.62 | 1451 | 48 | 15 |
+| Speedrunner | Setup | 3.00 | 3.00 | 3.06 | 283 | 6 | 0 |
+| Speedrunner | Room 1 | 9.29 | 9.29 | 11.73 | 335 | 14 | 9 |
+| Speedrunner | Room 2 | 10.39 | 19.68 | 13.83 | 450 | 14 | 4 |
+| Speedrunner | Room 3 | 9.14 | 28.82 | 11.19 | 383 | 14 | 2 |
+| Speedrunner | Rooms 1–3 total | 28.82 | 28.82 | 36.75 | 1168 | 42 | 15 |
+| Speedrunner | New game to chapter complete | 31.82 | 31.82 | 39.81 | 1451 | 48 | 15 |
+| Careful reader | Setup | 94.33 | 94.33 | 94.39 | 283 | 6 | 0 |
+| Careful reader | Room 1 | 247.00 | 247.00 | 246.77 | 608 | 27 | 9 |
+| Careful reader | Room 2 | 202.83 | 449.83 | 203.95 | 544 | 21 | 4 |
+| Careful reader | Room 3 | 168.83 | 618.67 | 168.00 | 458 | 17 | 2 |
+| Careful reader | Rooms 1–3 total | 618.67 | 618.67 | 618.72 | 1610 | 65 | 15 |
+| Careful reader | New game to chapter complete | 713.00 | 713.00 | 713.11 | 1893 | 71 | 15 |
 
-**230-wpm rooms 1–3 result — PASS at 372.39 s against 180.00 s.**
-The speedrunner paced total was 28.82 s. The careful reader paced total was 601.29 s.
-The speedrunner reached chapter complete after 34.59 browser seconds from room 1. That run falsifies a hard 180-second minimum.
+**230-wpm rooms 1–3 result — PASS at 382.57 s against 180.00 s.**
+The speedrunner paced total was 28.82 s. The careful reader paced total was 618.67 s.
+The speedrunner reached chapter complete after 36.75 browser seconds from room 1. That run falsifies a hard 180-second minimum.
 
-Six optional objects and three chatter panels added 149.12 s at 180 wpm, with the required route repriced at the same reading rate. The delta includes changed text and walking on the optional route.
+Six optional objects and three chatter panels added 153.50 s at 180 wpm, with the required route repriced at the same reading rate. The delta includes changed text and walking on the optional route.
 
-The completion card contained 57 new words and added 14.87 s of reading after arrival at 230 wpm.
+The completion card contained 74 new words and added 19.30 s of reading after arrival at 230 wpm.
 <!-- playtime-results:end -->
 
 ## Static cross-check

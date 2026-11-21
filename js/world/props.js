@@ -1,4 +1,4 @@
-import { T, box, tube, mesh, beam, shadow, person, lettering } from './geometry.js';
+import { T, box, tube, mesh, beam, shadow, person, lettering, miniatureBase } from './geometry.js';
 import { buildCharacter } from './characters.js';
 import { sizes } from './layouts.js';
 
@@ -194,7 +194,8 @@ export function buildProp(parent, prop, c) {
       status.lights.push(box(group, .54, .06, .045, c.accent, x, .4, 1.12, true));
     }
   } else if (type === 'robot') {
-    box(group, .77, .34, .77, c.dark, 0, .22);
+    miniatureBase(group, brass);
+    tube(group, .34, .45, .25, c.dark, 0, .245, 0, 12);
     tube(group, .37, .46, .6, brass, 0, .65, 0, 6);
     box(group, .63, .3, .45, steel, 0, 1.04);
     for (const x of [-.14, .14]) box(group, .13, .08, .025, c.accent, x, 1.065, .239, true);
@@ -204,6 +205,7 @@ export function buildProp(parent, prop, c) {
       const figure = new T.Group();
       figure.position.x = x;
       group.add(figure);
+      miniatureBase(figure, coat);
       person(figure, coat, false);
     }
   } else if (type === 'labBench') {

@@ -69,6 +69,11 @@ export function shadow(group, width, depth) {
   object.scale.set(width * .66, depth * .69, 1);
 }
 
+export function miniatureBase(group, color = 0xa47a51) {
+  tube(group, .47, .55, .10, 0x27232a, 0, .055, 0, 16);
+  tube(group, .455, .48, .025, color, 0, .109, 0, 16);
+}
+
 export function person(group, coat, visor = true) {
   tube(group, .26, .32, .53, coat, 0, .79, 0, 6);
   for (const x of [-.15, .15]) {

@@ -3,6 +3,13 @@ import { T, box, mesh, tube, beam, lettering } from './geometry.js';
 export function buildShell(group, layout, id, c) {
   const { x, z } = layout;
   const panorama = [3, 4, 6, 8].includes(id);
+  // A felt-lined wooden plinth frames the room and keeps the walkable grid unchanged.
+  box(group, x * 2 + 1.45, .38, z * 2 + 1.45, 0x412b24, 0, -.63);
+  box(group, x * 2 + 1.5, .07, z * 2 + 1.5, 0x8f6040, 0, -.43);
+  box(group, x * 2 + 1.19, .06, z * 2 + 1.19, 0x314744, 0, -.38);
+  for (const offset of [.08, .19, .29]) {
+    box(group, x * 2 + 1.32, .012, .013, 0x68452f, 0, -.77 + offset, z + .73);
+  }
   box(group, x * 2 + .32, .46, z * 2 + .32, c.dark, 0, -.29);
   box(group, x * 2, .11, z * 2, c.deck, 0, -.057);
   const seams = [];
