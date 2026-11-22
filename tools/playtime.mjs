@@ -6,20 +6,20 @@ import { fileURLToPath } from 'node:url';
 import { chromium, serve, until } from './chromium.mjs';
 import { layouts } from '../js/world/layouts.js';
 import { routeTo } from '../js/world/navigation.js';
+import { optionalVisit, roomDialogue, solveLaterPuzzle } from './playtime-route.mjs';
+import { powerRotations } from './playtime-solutions.mjs';
+import { additions, formatReport, formatWalkthrough, readingDelay, seconds, threshold } from './playtime-report.mjs';
 
 const root = fileURLToPath(new URL('..', import.meta.url)).replace(/\/$/, '');
-const reportPath = new URL('../docs/playtime.md', import.meta.url);
-const threshold = 180;
+const all = process.argv.includes('--all');
+const reportPath = new URL(all ? '../docs/walkthrough-timing.md' : '../docs/playtime.md', import.meta.url);
 const walkSpeed = 7; // Guided walking in createWorld().move(), js/world/view.js.
 const profiles = [
   { title: 'Average player', wpm: 230 },
   { title: 'Speedrunner', wpm: 0 },
   { title: 'Careful reader', wpm: 180, optional: true }
 ];
-const number = value => value.toFixed(2);
-const seconds = value => (value / 1000).toFixed(2);
 const wordCount = text => (text.match(/[\p{L}\p{N}]+(?:[’'-][\p{L}\p{N}]+)*/gu) ?? []).length;
-const readingDelay = (words, wpm) => wpm && words ? Math.max(1500, words * 60000 / wpm) : 0;
 
 const server = await serve(root);
 let browser;
@@ -35,17 +35,22 @@ try {
     assert.deepEqual(browser.errors, [], 'Browser console errors');
     results.push(result);
   }
-  const report = formatReport(results);
+  const report = all ? formatWalkthrough(results) : formatReport(results);
   console.log(report);
   const doc = await readFile(reportPath, 'utf8');
-  const section = /<!-- playtime-results:start -->[\s\S]*?<!-- playtime-results:end -->/;
-  assert.match(doc, section, 'Missing results section in docs/playtime.md');
-  const followup = /<!-- playtime-followup:start -->[\s\S]*?<!-- playtime-followup:end -->/;
-  assert.match(doc, followup, 'Missing follow-up section in docs/playtime.md');
-  const underTarget = results[0].segments.slice(1).reduce((total, room) => total + room.model, 0) < threshold * 1000;
-  await writeFile(reportPath, doc
-    .replace(section, () => `<!-- playtime-results:start -->\n${report.trim()}\n<!-- playtime-results:end -->`)
-    .replace(followup, () => `<!-- playtime-followup:start -->\n${underTarget ? additions() + '\n' : ''}<!-- playtime-followup:end -->`));
+  const key = all ? 'walkthrough-results' : 'playtime-results';
+  const section = new RegExp(`<!-- ${key}:start -->[\\s\\S]*?<!-- ${key}:end -->`);
+  assert.match(doc, section, `Missing results section in ${reportPath.pathname}`);
+  const updated = doc.replace(section, () => `<!-- ${key}:start -->\n${report.trim()}\n<!-- ${key}:end -->`);
+  if (all) {
+    await writeFile(reportPath, updated);
+  } else {
+    const followup = /<!-- playtime-followup:start -->[\s\S]*?<!-- playtime-followup:end -->/;
+    assert.match(doc, followup, 'Missing follow-up section in docs/playtime.md');
+    const underTarget = results[0].segments.slice(1).reduce((total, room) => total + room.model, 0) < threshold * 1000;
+    await writeFile(reportPath, updated.replace(followup,
+      () => `<!-- playtime-followup:start -->\n${underTarget ? additions() + '\n' : ''}<!-- playtime-followup:end -->`));
+  }
 } finally {
   try {
     await browser?.close();
@@ -66,9 +71,18 @@ async function play({ send, evaluate }, profile) {
   const seen = new Set();
   const segments = [];
   let segment;
-  await sleep(readingDelay(await newWords(), profile.wpm));
-  // Start the clock on pressing New game. The title was visible before the run.
-  startSegment('Setup');
+  if (all) {
+    await until(() => evaluate(`(() => {
+      const image = document.querySelector('#screen .card-art img');
+      return image?.complete && image.naturalWidth > 0 && image.checkVisibility();
+    })()`));
+    startSegment('Title screen');
+    await readScreen();
+    finishSegment();
+  } else {
+    await sleep(readingDelay(await newWords(), profile.wpm));
+  }
+  startSegment('Setup', all ? segment.finished : undefined);
   await click('#screen button', 'New game', { read: false });
   await click('.class-choice', undefined, { index: 0 });
   await click('input[name="ideal"]', undefined, { index: 0 });
@@ -78,14 +92,15 @@ async function play({ send, evaluate }, profile) {
 
   let position;
   finishSegment();
-  for (let room = 1; room <= 3; room++) {
+  for (let room = 1; room <= (all ? 9 : 3); room++) {
     startSegment(`Room ${room}`, segment.finished);
     assert.equal(await evaluate('window.__game.roomId'), room);
     const layout = layouts[room];
     position = { x: 0, z: layout.spawn };
     const world = await evaluate('!document.querySelector("#world").hidden');
-    const required = (await evaluate('window.__game.hotspots')).filter(entry => entry.puzzle || entry.exit);
-    const [puzzle, exit] = required;
+    const hotspots = await evaluate('window.__game.hotspots');
+    const [puzzle, exit] = hotspots.filter(entry => entry.puzzle || entry.exit);
+    const controls = { approach, choose, inspect, click, setValue, evaluate, puzzleConfirmation };
     assert.ok(puzzle.puzzle && exit.exit, 'Expected one puzzle and one exit');
 
     if (profile.optional) {
@@ -103,14 +118,16 @@ async function play({ send, evaluate }, profile) {
       } else if (room === 2) {
         await inspect('c1_log2');
         await inspect('c1_gauges');
-      } else {
+      } else if (room === 3) {
         await inspect('c1_listen');
+      } else {
+        await optionalVisit(room, controls, hotspots);
       }
     }
 
     await approach(puzzle.id, 'puzzle');
     if (room === 1) {
-      for (const [index, turns] of [[11, 3], [6, 2], [7, 1], [8, 1], [13, 2]]) {
+      for (const [index, turns] of powerRotations) {
         for (let turn = 0; turn < turns; turn++) {
           await click('.conduit-tile', undefined, { index, move: true, understand: index === 11 && turn === 0 });
         }
@@ -121,10 +138,12 @@ async function play({ send, evaluate }, profile) {
         await click('.valve-wheel', letter, { move: true, understand: letter === 'C' });
       }
       await puzzleConfirmation();
-    } else {
+    } else if (room === 3) {
       if (!profile.optional) await click('.pulse-note summary', undefined, { understand: true });
       await typeShift(profile.optional);
       await click('#overlay button', 'Transmit', { move: true });
+    } else {
+      await solveLaterPuzzle(room, controls, profile.optional);
     }
     const solved = await state();
     assert.equal(solved.flags[puzzle.setFlag], true);
@@ -146,9 +165,28 @@ async function play({ send, evaluate }, profile) {
       await choose('c1_talk.fin.0');
       assert.equal((await state()).flags.c1_ending_peace, true);
     }
+    if (all && room > 3) await roomDialogue(room, controls);
 
     await approach(exit.id);
     console.log(`  ${segment.name} reached in ${seconds(segment.wall)} s`);
+
+    if (all && room % 3 === 0) {
+      const chapter = room / 3;
+      assert.match(await evaluate('document.querySelector("#screen .eyebrow").textContent'),
+        new RegExp(`Chapter ${chapter} of 3 complete`));
+      startSegment(`Chapter ${chapter} completion card`, segment.finished);
+      if (profile.optional && await evaluate('Boolean(document.querySelector(".session-recap details"))')) {
+        await click('.session-recap summary');
+      }
+      await click('#screen button', 'Continue');
+      finishSegment();
+      if (room < 9) {
+        startSegment(`Chapter ${chapter + 1} intro`, segment.finished);
+        assert.equal((await state()).screen, 'intro');
+        await click('#screen button', 'Begin chapter');
+        finishSegment();
+      }
+    }
 
     async function inspect(id) {
       await approach(id, 'message');
@@ -180,7 +218,7 @@ async function play({ send, evaluate }, profile) {
       }
       const arrived = kind ? `document.querySelector('#overlay').open &&
         document.querySelector('#overlay').dataset.kind === ${JSON.stringify(kind)}`
-        : room === 3 ? 'window.__game.state.screen === "complete"' : `window.__game.roomId === ${room + 1}`;
+        : room % 3 === 0 ? 'window.__game.state.screen === "complete"' : `window.__game.roomId === ${room + 1}`;
 
       // Wait before selecting the object when the graphics fallback interacts immediately.
       const prompt = await click(panel, undefined, { index, extra: world ? 0 : travel, walking: world });
@@ -198,11 +236,30 @@ async function play({ send, evaluate }, profile) {
       }
     }
   }
-  assert.equal((await state()).screen, 'complete');
-  assert.match(await evaluate('document.querySelector("#screen .eyebrow").textContent'), /Chapter 1 of 3 complete/);
-  const endingWords = await newWords();
-  const endingReading = readingDelay(endingWords, profile.wpm);
-  await sleep(endingReading);
+  let endingWords, endingReading;
+  if (all) {
+    startSegment('Finale', segment.finished);
+    const finale = await state();
+    assert.equal(finale.screen, 'finale');
+    if (profile.optional) assert.equal(Object.keys(finale.journal).length, 20, 'Careful route journal coverage');
+    assert.equal(await evaluate('document.querySelectorAll(".epilogue p").length'), 3);
+    assert.match(await evaluate('document.querySelector(".finale-art figcaption").textContent'), /lit for planting/);
+    await until(() => evaluate(`(() => {
+      const art = document.querySelector('.finale-art');
+      const canvas = art.querySelector('canvas');
+      const image = art.querySelector('img');
+      return (canvas && !canvas.hidden) || (image.complete && image.naturalWidth > 0);
+    })()`));
+    await evaluate('new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(() => resolve(true))))');
+    await readScreen();
+    finishSegment();
+  } else {
+    assert.equal((await state()).screen, 'complete');
+    assert.match(await evaluate('document.querySelector("#screen .eyebrow").textContent'), /Chapter 1 of 3 complete/);
+    endingWords = await newWords();
+    endingReading = readingDelay(endingWords, profile.wpm);
+    await sleep(endingReading);
+  }
   await evaluate('localStorage.clear()');
   return { ...profile, segments, endingWords, endingReading };
 
@@ -281,12 +338,24 @@ async function play({ send, evaluate }, profile) {
     await click(`#overlay [data-choice="${id}"]`, undefined, options);
   }
 
-  async function puzzleConfirmation() {
-    // Read the temporary success line while the game's one-second timer runs.
-    await Promise.all([
-      readScreen(1000),
-      until(() => evaluate('document.querySelector("#overlay").dataset.kind === "message"'))
-    ]);
+  async function puzzleConfirmation(
+    ready = 'document.querySelector("#overlay").dataset.kind === "message"', duration = 1000
+  ) {
+    // Read newly visible text while the native puzzle timer runs.
+    await Promise.all([readScreen(duration), until(() => evaluate(ready))]);
+  }
+
+  function setValue(selector, value, options) {
+    return action(async () => {
+      assert.equal(await evaluate(`(() => {
+        const control = document.querySelector(${JSON.stringify(selector)});
+        if (!control?.checkVisibility({ checkVisibilityCSS: true }) || control.disabled) return false;
+        control.value = ${JSON.stringify(value)};
+        control.dispatchEvent(new Event('input', { bubbles: true }));
+        control.dispatchEvent(new Event('change', { bubbles: true }));
+        return control.value === ${JSON.stringify(value)};
+      })()`), true, `Unavailable puzzle setting: ${selector} = ${value}`);
+    }, options);
   }
 
   async function typeShift(understand) {
@@ -323,52 +392,4 @@ function visibleText() {
     byElement.set(parent, previous ? `${previous} ${value}` : value);
   }
   return [...byElement.values()];
-}
-
-function formatReport(results) {
-  const lines = ['| Pace | Segment | Paced seconds | Cumulative seconds | Browser seconds | Words | Actions | Puzzle moves |',
-    '| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: |'];
-  const totals = entries => entries.reduce((out, entry) => ({
-    model: out.model + entry.model, wall: out.wall + entry.wall, words: out.words + entry.words,
-    actions: out.actions + entry.actions, moves: out.moves + entry.moves
-  }), { model: 0, wall: 0, words: 0, actions: 0, moves: 0 });
-  const row = (title, name, entry, cumulative) =>
-    `| ${title} | ${name} | ${seconds(entry.model)} | ${seconds(cumulative)} | ${seconds(entry.wall)} | ${entry.words} | ${entry.actions} | ${entry.moves} |`;
-  for (const { title, segments } of results) {
-    lines.push(row(title, 'Setup', segments[0], segments[0].model));
-    let cumulative = 0;
-    for (const segment of segments.slice(1)) {
-      cumulative += segment.model;
-      lines.push(row(title, segment.name, segment, cumulative));
-    }
-    lines.push(row(title, 'Rooms 1–3 total', totals(segments.slice(1)), cumulative));
-    const full = totals(segments);
-    lines.push(row(title, 'New game to chapter complete', full, full.model));
-  }
-  const [average, fast, careful] = results;
-  const averageRooms = average.segments.slice(1);
-  const baseline = totals(averageRooms).model;
-  const fastRooms = totals(fast.segments.slice(1));
-  const carefulRooms = totals(careful.segments.slice(1));
-  const baselineAt180 = baseline + averageRooms.flatMap(room => room.reading).reduce((sum, { words, overlap }) =>
-    sum + Math.max(readingDelay(words, 180), overlap) - Math.max(readingDelay(words, 230), overlap), 0);
-  const extra = carefulRooms.model - baselineAt180;
-  const verdict = value => value >= threshold * 1000 ? 'PASS' : 'FAIL';
-  lines.push('', `**230-wpm rooms 1–3 result — ${verdict(baseline)} at ${seconds(baseline)} s against ${number(threshold)} s.**`,
-    `The speedrunner paced total was ${seconds(fastRooms.model)} s. The careful reader paced total was ${seconds(carefulRooms.model)} s.`,
-    `The speedrunner reached chapter complete after ${seconds(fastRooms.wall)} browser seconds from room 1. ` +
-      (fastRooms.wall < threshold * 1000 ? 'That run falsifies a hard 180-second minimum.' :
-        'The browser run did not demonstrate a sub-180-second completion.'),
-    '', `Six optional objects and three chatter panels added ${seconds(extra)} s at 180 wpm, with the required route repriced at the same reading rate. The delta includes changed text and walking on the optional route.`,
-    '', `The completion card contained ${average.endingWords} new words and added ${seconds(average.endingReading)} s of reading after arrival at 230 wpm.`);
-  return lines.join('\n') + '\n';
-}
-
-function additions() {
-  return `## Story-driven additions if the paced route falls short
-
-- Cryo Deck, **+20–30 s**. Recover a wake-cycle record from the pods and use it with ORI to identify which conduit branch the pressure spike damaged.
-- Life Support, **+20–35 s**. Diagnose the pressure fault by comparing the gauge with the log. Let engineering, science, or a manual valve isolation reach the same repair through different actions.
-- Life Support, **+15–25 s**. Ask ORI to weigh two conflicting entries in protocol nine. A successful check can identify the misplaced entry, while a failed check leads to checking the original log together.
-- Signal Laboratory, **+25–40 s**. Use the decoded header to align a reply with the gaps in the Veil’s pulse, then confirm the timing through its reply before choosing what to do with its memories.`;
 }

@@ -3,6 +3,8 @@ import { mkdir, writeFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 import { chromium, serve, until } from './chromium.mjs';
 import { verifyCanvas } from './e2e-canvas.mjs';
+import { powerRotations, balanceWeighings, crateTurns, pipReplies, quarrelReplies,
+  captainCheck, fernCheck, reedCheck, vaultCheck } from './playtime-solutions.mjs';
 
 const root = fileURLToPath(new URL('..', import.meta.url)).replace(/\/$/, '');
 const shots = new URL('./shots/', import.meta.url);
@@ -216,31 +218,26 @@ async function play({ send, evaluate }) {
     if (room === 4) {
       await interact('c2_radio1');
       await send('Emulation.setEmulatedMedia', { features: [{ name: 'prefers-reduced-motion', value: 'no-preference' }] });
-      await roll('c2_tamsin_calm', 16, 'advantage', 15, true, true);
+      await roll(reedCheck.id, reedCheck.die, 'advantage', 15, true, true);
       await shot('dice-roll');
       assert.equal((await current()).inspiration, 0);
       await send('Emulation.setEmulatedMedia', { features: [{ name: 'prefers-reduced-motion', value: 'reduce' }] });
-      await choose('continue');
-      await choose('c2_radio1.calm.0');
-      await choose('done');
+      for (const reply of reedCheck.replies) await choose(reply);
       assert.match(await evaluate('document.querySelector("#room-intro").textContent'), /cue from the Reed/);
     }
     if (room === 5) {
       await interact('c2_pip');
-      await choose('c2_pip.a.3');
+      await choose(pipReplies[0]);
       assert.equal((await current()).inspiration, 1, 'Roleplay awards Inspiration');
-      await choose('c2_pip_count');
-      await choose('c2_pip.win.0');
+      for (const reply of pipReplies.slice(1, -1)) await choose(reply);
       assert.doesNotMatch(await evaluate('document.querySelector("#overlay .dialogue-line").textContent'), /seven|7/i);
-      await choose('done');
+      await choose(pipReplies.at(-1));
     }
 
     if (room === 7) {
       await interact('c3_fern1');
-      await roll('c3_fern_calm', 20, 'normal', 19, true);
-      await choose('continue');
-      await choose('c3_fern1.calm.0');
-      await choose('done');
+      await roll(vaultCheck.id, vaultCheck.die, 'normal', 19, true);
+      for (const reply of vaultCheck.replies) await choose(reply);
     }
 
     await interact(puzzle.id);
@@ -279,24 +276,17 @@ async function play({ send, evaluate }) {
     }
     if (room === 6) {
       await interact(gated.id);
-      await roll('c2_cap_all', 20, 'advantage', 20, true);
-      await choose('continue');
-      await choose('c2_talk3.all.0');
-      await choose('c2_talk3.fin.0');
+      await roll(captainCheck.id, captainCheck.die, 'advantage', 20, true);
+      for (const reply of captainCheck.replies) await choose(reply);
     }
     if (room === 8) {
       await interact('c3_quarrel');
-      await choose('c3_quarrel.a.2');
-      await choose('c3_quarrel_rota');
-      await choose('done');
+      for (const reply of quarrelReplies) await choose(reply);
     }
     if (room === 9) {
       await interact(gated.id);
-      await roll('c3_fern_release', 1, 'advantage', 0, false);
-      await choose('continue');
-      await choose('c3_talk3.pause.0');
-      await choose('c3_talk3.replant.0');
-      await choose('c3_talk3.fin.0');
+      await roll(fernCheck.id, fernCheck.die, 'advantage', 0, false);
+      for (const reply of fernCheck.replies) await choose(reply);
     }
 
     assert.equal(await evaluate(`window.__game.hotspots.find(entry => entry.id === ${JSON.stringify(exit.id)}).status`), 'Open');
@@ -338,7 +328,7 @@ async function play({ send, evaluate }) {
   async function solvePower() {
     assert.equal(await evaluate(`(() => {
       const tiles = document.querySelectorAll(".conduit-tile");
-      for (const [index, turns] of [[11, 3], [6, 2], [7, 1], [8, 1], [13, 2]]) {
+      for (const [index, turns] of ${JSON.stringify(powerRotations)}) {
         for (let turn = 0; turn < turns; turn++) tiles[index].click();
       }
       return document.querySelector("#overlay-content").textContent.includes("Power reaches the door.")
@@ -355,19 +345,15 @@ async function play({ send, evaluate }) {
       button => button.textContent === 'Name the heavy crate').checkVisibility()`);
     async function weigh(left, right) {
       await evaluate(`[...document.querySelectorAll('.crate-rack button')].forEach((crate, index) => {
-        const id = index + 1;
-        const current = crate.textContent.endsWith(' L') ? 1 : crate.textContent.endsWith(' R') ? 2 : 0;
-        const target = ${JSON.stringify(left)}.includes(id) ? 1 : ${JSON.stringify(right)}.includes(id) ? 2 : 0;
-        for (let turns = (target - current + 3) % 3; turns > 0; turns--) crate.click();
+        const count = (${crateTurns})(index, crate.textContent, ${JSON.stringify(left)}, ${JSON.stringify(right)});
+        for (let turns = count; turns > 0; turns--) crate.click();
       })`);
       await click('Weigh', modal);
     }
-    await weigh([1, 2], [3, 4]);
-    assert.equal(await naming(), false);
-    await weigh([5], [6]);
-    assert.equal(await naming(), false);
-    await weigh([7], [8]);
-    assert.equal(await naming(), true);
+    for (const [index, pans] of balanceWeighings.entries()) {
+      await weigh(...pans);
+      assert.equal(await naming(), index === balanceWeighings.length - 1);
+    }
     await click('Name the heavy crate', modal);
     await click('7', '#overlay button[aria-label="Crate 7"]');
     await click('Confirm', modal);
